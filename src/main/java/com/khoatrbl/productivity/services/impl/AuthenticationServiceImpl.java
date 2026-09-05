@@ -3,6 +3,7 @@ package com.khoatrbl.productivity.services.impl;
 import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
+import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.security.CustomUserDetailsService;
 import com.khoatrbl.productivity.services.AuthenticationService;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,13 +41,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public String login(String email, String password) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-        );
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
 
-        UserDetails authenticatedUserDetails = (UserDetails) auth.getPrincipal();
+            UserDetails authenticatedUserDetails = (UserDetails) auth.getPrincipal();
 
-        return this.generateJwtToken(authenticatedUserDetails);
+            return this.generateJwtToken(authenticatedUserDetails);
+        } catch (AuthenticationException e) {
+            throw new InvalidCredentialsException("Invalid email or password.");
+        }
+
     }
 
     @Override

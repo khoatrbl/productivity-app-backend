@@ -2,15 +2,14 @@ package com.khoatrbl.productivity.controllers;
 
 import com.khoatrbl.productivity.domains.dtos.ApiErrorResponse;
 import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
-import jakarta.persistence.EntityExistsException;
+import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import javax.naming.AuthenticationException;
+import org.springframework.security.core.AuthenticationException;
 import java.util.List;
 
 @RestControllerAdvice
@@ -21,6 +20,16 @@ public class GlobalExceptionHandler {
         ApiErrorResponse res = ApiErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .message("Invalid email or password.")
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .message(e.getMessage())
+                .status(HttpStatus.UNAUTHORIZED.value())
                 .build();
 
         return new ResponseEntity<>(res, HttpStatus.UNAUTHORIZED);
