@@ -1,5 +1,6 @@
 package com.khoatrbl.productivity.services;
 
+import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
 import com.khoatrbl.productivity.domains.entities.Users;
 
 import java.util.List;

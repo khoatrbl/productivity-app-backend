@@ -1,8 +1,10 @@
 package com.khoatrbl.productivity.services.impl;
 
+import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.services.UserService;
+import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
