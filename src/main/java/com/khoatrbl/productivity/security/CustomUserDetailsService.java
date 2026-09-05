@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @AllArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
@@ -21,6 +23,15 @@ public class CustomUserDetailsService implements UserDetailsService {
         Users user = userRepository.findByEmail(username)
                 .orElseThrow(
                         () -> new EntityNotFoundException("User not found with email: " + username)
+                );
+
+        return new CustomUserDetails(user);
+    }
+
+    public UserDetails loadUserByUserId(String userId) {
+        Users user = userRepository.findById(UUID.fromString(userId))
+                .orElseThrow(
+                        () -> new EntityNotFoundException("User not found with id: " + userId)
                 );
 
         return new CustomUserDetails(user);

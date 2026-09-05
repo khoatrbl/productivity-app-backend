@@ -5,6 +5,7 @@ import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
 import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
 import com.khoatrbl.productivity.repositories.UserRepository;
+import com.khoatrbl.productivity.security.CustomUserDetails;
 import com.khoatrbl.productivity.security.CustomUserDetailsService;
 import com.khoatrbl.productivity.services.AuthenticationService;
 import io.jsonwebtoken.Claims;
@@ -46,7 +47,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     new UsernamePasswordAuthenticationToken(email, password)
             );
 
-            UserDetails authenticatedUserDetails = (UserDetails) auth.getPrincipal();
+            CustomUserDetails authenticatedUserDetails = (CustomUserDetails) auth.getPrincipal();
 
             return this.generateJwtToken(authenticatedUserDetails);
         } catch (AuthenticationException e) {
@@ -56,13 +57,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public String generateJwtToken(UserDetails userDetails) {
+    public String generateJwtToken(CustomUserDetails customUserDetails) {
         Date issueDate = new Date(System.currentTimeMillis());
         Date expDate = new Date(System.currentTimeMillis() + JWT_EXP.toMillis());
 
         return Jwts.builder()
-                .claim("role", userDetails.getAuthorities())
-                .subject(userDetails.getUsername())
+                .claim("role", customUserDetails.getAuthorities())
+                .claim("email", customUserDetails.getUsername())
+                .subject(customUserDetails.getUserId().toString())
                 .issuedAt(issueDate)
                 .expiration(expDate)
                 .signWith(getSigningKey())
@@ -77,9 +79,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        String email = claims.getSubject();
+        String userId = claims.getSubject();
 
-        return customUserDetailsService.loadUserByUsername(email);
+        return customUserDetailsService.loadUserByUserId(userId);
     }
 
     @Override
