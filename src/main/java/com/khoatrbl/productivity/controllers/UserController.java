@@ -2,7 +2,7 @@ package com.khoatrbl.productivity.controllers;
 
 import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.Users;
-import com.khoatrbl.productivity.security.CustomUserDetails;
+import com.khoatrbl.productivity.utilities.SecurityUtils;
 import com.khoatrbl.productivity.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class UserController {
     @GetMapping
     public ResponseEntity<ProfileDto> getMyProfile(Authentication authentication) {
 
-        UUID userId = getCurrentUserId(authentication);
+        UUID userId = SecurityUtils.getCurrentUserId(authentication);
         Users user = userService.getUserById(userId);
 
         ProfileDto profileDto = ProfileDto.builder()
@@ -39,7 +39,7 @@ public class UserController {
             @Valid @RequestBody UpdateProfileRequest updateProfileRequest,
             Authentication authentication) {
 
-        UUID userId = getCurrentUserId(authentication);
+        UUID userId = SecurityUtils.getCurrentUserId(authentication);
         Users user = userService.updateUserProfile(userId, updateProfileRequest);
 
         UpdateProfileResponse res = UpdateProfileResponse.builder()
@@ -56,15 +56,9 @@ public class UserController {
             @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest,
             Authentication authentication) {
 
-        UUID userId = getCurrentUserId(authentication);
+        UUID userId = SecurityUtils.getCurrentUserId(authentication);
         userService.updateUserPassword(userId, updatePasswordRequest);
 
         return new ResponseEntity<>(new UpdatePasswordResponse(), HttpStatus.OK);
-    }
-
-    private UUID getCurrentUserId(Authentication authentication) {
-        CustomUserDetails currentUser = (CustomUserDetails) authentication.getPrincipal();
-
-        return currentUser.getUserId();
     }
 }

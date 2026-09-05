@@ -62,7 +62,6 @@ public class UserServiceImpl implements UserService {
                         () -> new EntityNotFoundException("User not found for id: " + id)
                 );
 
-        // TODO: These hashes are being hashed differently. Fix.
         String oldPassword = updatePasswordRequest.getOldPassword();
         String newPassword = updatePasswordRequest.getNewPassword();
         String confirmPassword = updatePasswordRequest.getConfirmNewPassword();
