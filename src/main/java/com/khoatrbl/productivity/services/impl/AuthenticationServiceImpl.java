@@ -4,6 +4,7 @@ import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
 import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
+import com.khoatrbl.productivity.exceptions.PasswordsNotMatchException;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.security.CustomUserDetails;
 import com.khoatrbl.productivity.security.CustomUserDetailsService;
@@ -88,6 +89,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public Users registerUser(RegisterRequest registerRequest) {
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
             throw new EmailAlreadyExistsException("Email is already used.");
+        }
+
+        String rawPassword = registerRequest.getRawPassword();
+        String confirmPassword = registerRequest.getConfirmPassword();
+
+        if (!rawPassword.equals(confirmPassword)) {
+            throw new PasswordsNotMatchException("Passwords are not matched.");
         }
 
         String hashedPassword = passwordEncoder.encode(registerRequest.getRawPassword());

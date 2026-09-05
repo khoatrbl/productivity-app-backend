@@ -3,6 +3,7 @@ package com.khoatrbl.productivity.controllers;
 import com.khoatrbl.productivity.domains.dtos.ApiErrorResponse;
 import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
 import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
+import com.khoatrbl.productivity.exceptions.PasswordsNotMatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -67,5 +68,15 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PasswordsNotMatchException.class)
+    public ResponseEntity<ApiErrorResponse> handlePasswordsNotMatchException(PasswordsNotMatchException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .message(e.getMessage())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.BAD_REQUEST);
     }
 }

@@ -1,8 +1,6 @@
 package com.khoatrbl.productivity.controllers;
 
-import com.khoatrbl.productivity.domains.dtos.ProfileDto;
-import com.khoatrbl.productivity.domains.dtos.UpdateProfileRequest;
-import com.khoatrbl.productivity.domains.dtos.UpdateProfileResponse;
+import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.security.CustomUserDetails;
 import com.khoatrbl.productivity.services.UserService;
@@ -51,6 +49,17 @@ public class UserController {
                 .build();
 
         return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+    @PatchMapping
+    public ResponseEntity<UpdatePasswordResponse> updatePassword(
+            @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest,
+            Authentication authentication) {
+
+        UUID userId = getCurrentUserId(authentication);
+        userService.updateUserPassword(userId, updatePasswordRequest);
+
+        return new ResponseEntity<>(new UpdatePasswordResponse(), HttpStatus.OK);
     }
 
     private UUID getCurrentUserId(Authentication authentication) {
