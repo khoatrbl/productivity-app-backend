@@ -2,9 +2,6 @@ package com.khoatrbl.productivity.domains.dtos;
 
 import com.khoatrbl.productivity.domains.Priority;
 import com.khoatrbl.productivity.domains.Status;
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +14,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CreateTaskResponse {
+public class TaskDto {
     private String title;
     private String description;
     private LocalDate dueDate;

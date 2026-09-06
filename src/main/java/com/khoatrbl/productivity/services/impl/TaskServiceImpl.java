@@ -23,13 +23,11 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public List<Tasks> getAllTasksByUserId(UUID userId) {
-        return List.of();
+        return taskRepository.findAllByUserId(userId);
     }
 
     @Override
     public Tasks createTask(UUID userId, CreateTaskRequest createTaskRequest) {
-
-        // TODO: currently the method does NOT know who task this belongs to. Configure the owner of this task using the userID.
 
         Users owner = userRepository.findById(userId)
                 .orElseThrow(
