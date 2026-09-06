@@ -79,6 +79,8 @@ public class TaskController {
                 .description(updatedTask.getDescription())
                 .dueDate(updatedTask.getDueDate())
                 .dueTime(updatedTask.getDueTime())
+                .estimateMin(updatedTask.getEstimateMin())
+                .completeAt(updatedTask.getCompletedAt())
                 .priority(updatedTask.getPriority())
                 .status(updatedTask.getStatus())
                 .build();
@@ -86,3 +88,4 @@ public class TaskController {
         return new ResponseEntity<>(taskDto, HttpStatus.OK);
     }
 }
+

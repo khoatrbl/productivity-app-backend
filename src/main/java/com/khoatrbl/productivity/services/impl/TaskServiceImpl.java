@@ -14,6 +14,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,7 +56,7 @@ public class TaskServiceImpl implements TaskService {
 
         // TODO: Add in estimated min calculation
 
-        Tasks taskToUpdate = taskRepository.findByUserIdAndTaskId(userId, taskId)
+        Tasks taskToUpdate = taskRepository.findByIdAndUserId(taskId, userId)
                 .orElseThrow(
                         () -> new EntityNotFoundException("Task not found for task id: " + taskId)
                 );
@@ -64,9 +65,18 @@ public class TaskServiceImpl implements TaskService {
         taskToUpdate.setDescription(updateTaskRequest.getDescription());
         taskToUpdate.setDueDate(updateTaskRequest.getDueDate());
         taskToUpdate.setDueTime(updateTaskRequest.getDueTime());
+        taskToUpdate.setEstimateMin(15);
         taskToUpdate.setPriority(updateTaskRequest.getPriority());
         taskToUpdate.setStatus(updateTaskRequest.getStatus());
-        taskToUpdate.setEstimateMin(15);
+
+        if (updateTaskRequest.getStatus().equals(Status.COMPLETE)) {
+            if (taskToUpdate.getCompletedAt() == null) {
+                taskToUpdate.setCompletedAt(LocalDateTime.now());
+            }
+        } else {
+            taskToUpdate.setCompletedAt(null);
+        }
+
 
         return taskRepository.save(taskToUpdate);
     }
