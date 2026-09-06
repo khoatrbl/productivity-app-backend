@@ -55,14 +55,10 @@ public class TaskServiceImpl implements TaskService {
 
         // TODO: Add in estimated min calculation
 
-        Tasks taskToUpdate = taskRepository.findById(taskId)
+        Tasks taskToUpdate = taskRepository.findByUserIdAndTaskId(userId, taskId)
                 .orElseThrow(
                         () -> new EntityNotFoundException("Task not found for task id: " + taskId)
                 );
-
-        if (!taskToUpdate.getUser().getId().equals(userId)) {
-            throw new TaskAccessDeniedException();
-        }
 
         taskToUpdate.setTitle(updateTaskRequest.getTitle());
         taskToUpdate.setDescription(updateTaskRequest.getDescription());
