@@ -9,12 +9,14 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class TaskDto {
+    private UUID taskId;
     private String title;
     private String description;
     private LocalDate dueDate;

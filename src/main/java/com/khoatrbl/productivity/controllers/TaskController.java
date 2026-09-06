@@ -2,6 +2,7 @@ package com.khoatrbl.productivity.controllers;
 
 import com.khoatrbl.productivity.domains.dtos.CreateTaskRequest;
 import com.khoatrbl.productivity.domains.dtos.TaskDto;
+import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.utilities.SecurityUtils;
 import com.khoatrbl.productivity.services.TaskService;
@@ -49,6 +50,7 @@ public class TaskController {
 
         List<Tasks> taskList = taskService.getAllTasksByUserId(currentUserId);
         List<TaskDto> res = taskList.stream().map(task -> TaskDto.builder()
+                .taskId(task.getId())
                 .title(task.getTitle())
                 .description(task.getDescription())
                 .dueDate(task.getDueDate())
@@ -59,5 +61,28 @@ public class TaskController {
         ).toList();
 
         return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+    @PutMapping(path = "/{id}")
+    public ResponseEntity<TaskDto> updateTask(
+            @Valid @RequestBody UpdateTaskRequest updateTaskRequest,
+            @PathVariable("id") UUID taskId,
+            Authentication authentication
+    ) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
+        Tasks updatedTask = taskService.updateTask(currentUserId, taskId, updateTaskRequest);
+
+        TaskDto taskDto = TaskDto.builder()
+                .taskId(updatedTask.getId())
+                .title(updatedTask.getTitle())
+                .description(updatedTask.getDescription())
+                .dueDate(updatedTask.getDueDate())
+                .dueTime(updatedTask.getDueTime())
+                .priority(updatedTask.getPriority())
+                .status(updatedTask.getStatus())
+                .build();
+
+        return new ResponseEntity<>(taskDto, HttpStatus.OK);
     }
 }
