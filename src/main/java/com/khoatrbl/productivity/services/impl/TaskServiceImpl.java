@@ -80,4 +80,14 @@ public class TaskServiceImpl implements TaskService {
 
         return taskRepository.save(taskToUpdate);
     }
+
+    @Override
+    public void deleteTask(UUID userId, UUID taskId) {
+        Tasks taskToDelete = taskRepository.findByIdAndUserId(taskId, userId)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Task not found for task id: " + taskId)
+                );
+
+        taskRepository.delete(taskToDelete);
+    }
 }

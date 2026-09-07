@@ -87,5 +87,15 @@ public class TaskController {
 
         return new ResponseEntity<>(taskDto, HttpStatus.OK);
     }
+
+    @DeleteMapping(path = "/{id}")
+    public ResponseEntity<Void> deleteTask(@PathVariable("id") UUID taskId, Authentication authentication) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
+        taskService.deleteTask(currentUserId, taskId);
+
+        return ResponseEntity.noContent().build();
+    }
+
 }
 
