@@ -5,6 +5,7 @@ import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
 import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
 import com.khoatrbl.productivity.exceptions.PasswordsNotMatchException;
 import com.khoatrbl.productivity.exceptions.TaskAccessDeniedException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -89,6 +90,16 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(res, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleEntityNotFoundException(EntityNotFoundException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
     }
 
 }
