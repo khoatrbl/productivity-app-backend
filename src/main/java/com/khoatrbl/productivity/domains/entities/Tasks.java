@@ -29,7 +29,7 @@ public class Tasks {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -50,7 +50,7 @@ public class Tasks {
     private int estimateMin;
 
     @Column
-    private LocalDateTime startAt;
+    private LocalDateTime startedAt;
 
     @Column
     private LocalDateTime completedAt;

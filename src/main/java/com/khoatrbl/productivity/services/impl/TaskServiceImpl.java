@@ -6,9 +6,9 @@ import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdateTaskStatusRequest;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.domains.entities.Users;
-import com.khoatrbl.productivity.exceptions.TaskAccessDeniedException;
 import com.khoatrbl.productivity.repositories.TaskRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
+import com.khoatrbl.productivity.services.TaskEstimationService;
 import com.khoatrbl.productivity.services.TaskService;
 import com.khoatrbl.productivity.utilities.StringUtils;
 import jakarta.persistence.EntityNotFoundException;
@@ -23,6 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
+    private final TaskEstimationService taskEstimationService;
     private final UserRepository userRepository;
 
     @Override
@@ -44,10 +45,13 @@ public class TaskServiceImpl implements TaskService {
                 .description(StringUtils.normalizeDescription(createTaskRequest.getDescription()))
                 .dueDate(createTaskRequest.getDueDate())
                 .dueTime(createTaskRequest.getDueTime())
-                .estimateMin(15) // TODO: This is hardcoded for now, implement task estimation
                 .priority(createTaskRequest.getPriority())
                 .status(Status.INCOMPLETE)
                 .build();
+
+        int estimateTime = this.estimateTime(newTask);
+
+        newTask.setEstimateMin(estimateTime);
 
         return taskRepository.save(newTask);
     }
@@ -66,8 +70,8 @@ public class TaskServiceImpl implements TaskService {
         taskToUpdate.setDescription(updateTaskRequest.getDescription());
         taskToUpdate.setDueDate(updateTaskRequest.getDueDate());
         taskToUpdate.setDueTime(updateTaskRequest.getDueTime());
-        taskToUpdate.setEstimateMin(15);
         taskToUpdate.setPriority(updateTaskRequest.getPriority());
+        taskToUpdate.setEstimateMin(this.estimateTime(taskToUpdate));
 
         return taskRepository.save(taskToUpdate);
     }
@@ -83,8 +87,8 @@ public class TaskServiceImpl implements TaskService {
 
         switch (newStatus) {
             case IN_PROGRESS:
-                if (taskToUpdate.getStartAt() == null) {
-                    taskToUpdate.setStartAt(LocalDateTime.now());
+                if (taskToUpdate.getStartedAt() == null) {
+                    taskToUpdate.setStartedAt(LocalDateTime.now());
                 }
                 taskToUpdate.setStatus(Status.IN_PROGRESS);
                 break;
@@ -113,5 +117,12 @@ public class TaskServiceImpl implements TaskService {
                 );
 
         taskRepository.delete(taskToDelete);
+    }
+
+    private int estimateTime(Tasks newTask) {
+        return taskEstimationService.estimateFromHistory(newTask)
+                .orElseGet(
+                        () -> taskEstimationService.estimateByPriorityBucket(newTask)
+                );
     }
 }

@@ -28,9 +28,11 @@ public class CreateTaskRequest {
     @Size(max = 1000, message = "Task description can only contains {max} characters.")
     private String description;
 
+    @NotNull(message = "Due date is required.")
     @FutureOrPresent(message = "Due date cannot be in the past.")
     private LocalDate dueDate;
 
+    @NotNull(message = "Due time is required.")
     private LocalTime dueTime;
 
     @NotNull(message = "Task priority is required.")
