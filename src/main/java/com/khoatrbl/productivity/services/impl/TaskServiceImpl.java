@@ -3,6 +3,7 @@ package com.khoatrbl.productivity.services.impl;
 import com.khoatrbl.productivity.domains.Status;
 import com.khoatrbl.productivity.domains.dtos.CreateTaskRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
+import com.khoatrbl.productivity.domains.dtos.UpdateTaskStatusRequest;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.exceptions.TaskAccessDeniedException;
@@ -52,7 +53,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Tasks updateTask(UUID userId, UUID taskId, UpdateTaskRequest updateTaskRequest) {
+    public Tasks updateTaskData(UUID userId, UUID taskId, UpdateTaskRequest updateTaskRequest) {
 
         // TODO: Add in estimated min calculation
 
@@ -67,16 +68,39 @@ public class TaskServiceImpl implements TaskService {
         taskToUpdate.setDueTime(updateTaskRequest.getDueTime());
         taskToUpdate.setEstimateMin(15);
         taskToUpdate.setPriority(updateTaskRequest.getPriority());
-        taskToUpdate.setStatus(updateTaskRequest.getStatus());
 
-        if (updateTaskRequest.getStatus().equals(Status.COMPLETE)) {
-            if (taskToUpdate.getCompletedAt() == null) {
-                taskToUpdate.setCompletedAt(LocalDateTime.now());
-            }
-        } else {
-            taskToUpdate.setCompletedAt(null);
+        return taskRepository.save(taskToUpdate);
+    }
+
+    @Override
+    public Tasks updateTaskStatus(UUID userId, UUID taskId, UpdateTaskStatusRequest updateTaskStatusRequest) {
+        Tasks taskToUpdate = taskRepository.findByIdAndUserId(taskId, userId)
+                        .orElseThrow(
+                                () -> new EntityNotFoundException("Task not found for id: " + taskId)
+                        );
+
+        Status newStatus = updateTaskStatusRequest.getTaskStatus();
+
+        switch (newStatus) {
+            case IN_PROGRESS:
+                if (taskToUpdate.getStartAt() == null) {
+                    taskToUpdate.setStartAt(LocalDateTime.now());
+                }
+                taskToUpdate.setStatus(Status.IN_PROGRESS);
+                break;
+
+            case COMPLETE:
+                if (taskToUpdate.getCompletedAt() == null) {
+                    taskToUpdate.setCompletedAt(LocalDateTime.now());
+                }
+                taskToUpdate.setStatus(Status.COMPLETE);
+                break;
+
+            case INCOMPLETE:
+                taskToUpdate.setStatus(Status.INCOMPLETE);
+                taskToUpdate.setCompletedAt(null);
+                break;
         }
-
 
         return taskRepository.save(taskToUpdate);
     }

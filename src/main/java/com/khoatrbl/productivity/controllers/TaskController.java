@@ -3,6 +3,7 @@ package com.khoatrbl.productivity.controllers;
 import com.khoatrbl.productivity.domains.dtos.CreateTaskRequest;
 import com.khoatrbl.productivity.domains.dtos.TaskDto;
 import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
+import com.khoatrbl.productivity.domains.dtos.UpdateTaskStatusRequest;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.utilities.SecurityUtils;
 import com.khoatrbl.productivity.services.TaskService;
@@ -71,7 +72,7 @@ public class TaskController {
     ) {
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
 
-        Tasks updatedTask = taskService.updateTask(currentUserId, taskId, updateTaskRequest);
+        Tasks updatedTask = taskService.updateTaskData(currentUserId, taskId, updateTaskRequest);
 
         TaskDto taskDto = TaskDto.builder()
                 .taskId(updatedTask.getId())
@@ -80,12 +81,38 @@ public class TaskController {
                 .dueDate(updatedTask.getDueDate())
                 .dueTime(updatedTask.getDueTime())
                 .estimateMin(updatedTask.getEstimateMin())
+                .startAt(updatedTask.getStartAt())
                 .completeAt(updatedTask.getCompletedAt())
                 .priority(updatedTask.getPriority())
                 .status(updatedTask.getStatus())
                 .build();
 
         return new ResponseEntity<>(taskDto, HttpStatus.OK);
+    }
+
+    @PatchMapping(path = "/{id}")
+    public ResponseEntity<TaskDto> updateTaskStatus(
+            @Valid @RequestBody UpdateTaskStatusRequest updateTaskStatusRequest,
+            @PathVariable("id") UUID taskId,
+            Authentication authentication) {
+
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+        Tasks taskToUpdate = taskService.updateTaskStatus(currentUserId, taskId, updateTaskStatusRequest);
+
+        TaskDto dto = TaskDto.builder()
+                .taskId(taskToUpdate.getId())
+                .title(taskToUpdate.getTitle())
+                .description(taskToUpdate.getDescription())
+                .dueDate(taskToUpdate.getDueDate())
+                .dueTime(taskToUpdate.getDueTime())
+                .estimateMin(taskToUpdate.getEstimateMin())
+                .startAt(taskToUpdate.getStartAt())
+                .completeAt(taskToUpdate.getCompletedAt())
+                .priority(taskToUpdate.getPriority())
+                .status(taskToUpdate.getStatus())
+                .build();
+
+        return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
     @DeleteMapping(path = "/{id}")

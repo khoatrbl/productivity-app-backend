@@ -49,6 +49,10 @@ public class Tasks {
     @Column(nullable = false)
     private int estimateMin;
 
+    @Column
+    private LocalDateTime startAt;
+
+    @Column
     private LocalDateTime completedAt;
 
     @Column(nullable = false, updatable = false)

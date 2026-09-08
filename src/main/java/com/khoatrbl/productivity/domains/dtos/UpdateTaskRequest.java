@@ -34,7 +34,4 @@ public class UpdateTaskRequest {
 
     @NotNull(message = "Task priority is required.")
     private Priority priority;
-
-    @NotNull(message = "Task status is required.")
-    private Status status;
 }
