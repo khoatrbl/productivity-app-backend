@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -37,4 +39,6 @@ public class CreateTaskRequest {
 
     @NotNull(message = "Task priority is required.")
     private Priority priority;
+
+    private List<CreateSubTaskRequest> subTasks = new ArrayList<>();
 }

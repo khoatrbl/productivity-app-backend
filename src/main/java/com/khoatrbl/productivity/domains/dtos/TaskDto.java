@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -24,6 +25,7 @@ public class TaskDto {
     private LocalTime dueTime;
     private int estimateMin;
     private int totalExp;
+    private List<SubTaskDto> subTasks;
     private LocalDateTime startedAt;
     private LocalDateTime completeAt;
     private Priority priority;

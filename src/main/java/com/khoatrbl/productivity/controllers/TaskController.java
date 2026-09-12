@@ -5,6 +5,7 @@ import com.khoatrbl.productivity.domains.dtos.TaskDto;
 import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdateTaskStatusRequest;
 import com.khoatrbl.productivity.domains.entities.Tasks;
+import com.khoatrbl.productivity.mappers.TaskMapper;
 import com.khoatrbl.productivity.utilities.SecurityUtils;
 import com.khoatrbl.productivity.services.TaskService;
 import jakarta.validation.Valid;
@@ -32,18 +33,7 @@ public class TaskController {
 
         Tasks task = taskService.createTask(currentUserId, createTaskRequest);
 
-        TaskDto res = TaskDto.builder()
-                .taskId(task.getId())
-                .title(task.getTitle())
-                .description(task.getDescription())
-                .dueDate(task.getDueDate())
-                .dueTime(task.getDueTime())
-                .estimateMin(task.getEstimateMin())
-                .startedAt(task.getStartedAt())
-                .completeAt(task.getCompletedAt())
-                .priority(task.getPriority())
-                .status(task.getStatus())
-                .build();
+        TaskDto res = TaskMapper.toTaskDto(task);
 
 
         return new ResponseEntity<>(res, HttpStatus.CREATED);
@@ -54,20 +44,7 @@ public class TaskController {
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
 
         List<Tasks> taskList = taskService.getAllTasksByUserId(currentUserId);
-        List<TaskDto> res = taskList.stream().map(task -> TaskDto.builder()
-                .taskId(task.getId())
-                .title(task.getTitle())
-                .description(task.getDescription())
-                .dueDate(task.getDueDate())
-                .dueTime(task.getDueTime())
-                .estimateMin(task.getEstimateMin())
-                .totalExp(task.getTotalExp())
-                .startedAt(task.getStartedAt())
-                .completeAt(task.getCompletedAt())
-                .priority(task.getPriority())
-                .status(task.getStatus())
-                .build()
-        ).toList();
+        List<TaskDto> res = taskList.stream().map(TaskMapper::toTaskDto).toList();
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
@@ -82,19 +59,7 @@ public class TaskController {
 
         Tasks updatedTask = taskService.updateTaskData(currentUserId, taskId, updateTaskRequest);
 
-        TaskDto taskDto = TaskDto.builder()
-                .taskId(updatedTask.getId())
-                .title(updatedTask.getTitle())
-                .description(updatedTask.getDescription())
-                .dueDate(updatedTask.getDueDate())
-                .dueTime(updatedTask.getDueTime())
-                .estimateMin(updatedTask.getEstimateMin())
-                .totalExp(updatedTask.getTotalExp())
-                .startedAt(updatedTask.getStartedAt())
-                .completeAt(updatedTask.getCompletedAt())
-                .priority(updatedTask.getPriority())
-                .status(updatedTask.getStatus())
-                .build();
+        TaskDto taskDto = TaskMapper.toTaskDto(updatedTask);
 
         return new ResponseEntity<>(taskDto, HttpStatus.OK);
     }
@@ -106,21 +71,9 @@ public class TaskController {
             Authentication authentication) {
 
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
-        Tasks taskToUpdate = taskService.updateTaskStatus(currentUserId, taskId, updateTaskStatusRequest);
+        Tasks updatedTask = taskService.updateTaskStatus(currentUserId, taskId, updateTaskStatusRequest);
 
-        TaskDto dto = TaskDto.builder()
-                .taskId(taskToUpdate.getId())
-                .title(taskToUpdate.getTitle())
-                .description(taskToUpdate.getDescription())
-                .dueDate(taskToUpdate.getDueDate())
-                .dueTime(taskToUpdate.getDueTime())
-                .estimateMin(taskToUpdate.getEstimateMin())
-                .totalExp(taskToUpdate.getTotalExp())
-                .startedAt(taskToUpdate.getStartedAt())
-                .completeAt(taskToUpdate.getCompletedAt())
-                .priority(taskToUpdate.getPriority())
-                .status(taskToUpdate.getStatus())
-                .build();
+        TaskDto dto = TaskMapper.toTaskDto(updatedTask);
 
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }

@@ -3,10 +3,13 @@ package com.khoatrbl.productivity.services.impl;
 import com.khoatrbl.productivity.domains.Priority;
 import com.khoatrbl.productivity.domains.Status;
 import com.khoatrbl.productivity.domains.dtos.CreateTaskRequest;
+import com.khoatrbl.productivity.domains.dtos.SubTaskDto;
 import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdateTaskStatusRequest;
+import com.khoatrbl.productivity.domains.entities.SubTasks;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.domains.entities.Users;
+import com.khoatrbl.productivity.repositories.SubTaskRepository;
 import com.khoatrbl.productivity.repositories.TaskRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.services.TaskEstimationService;
@@ -17,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,6 +59,29 @@ public class TaskServiceImpl implements TaskService {
 
         int totalExp = this.calculateTaskTotalExp(createTaskRequest.getPriority(), estimateTime);
         newTask.setTotalExp(totalExp);
+
+        List<SubTasks> subtasks = new ArrayList<>();
+
+        if (!createTaskRequest.getSubTasks().isEmpty()) {
+            subtasks = createTaskRequest.getSubTasks().stream().map(
+                    subtask -> SubTasks.builder()
+                            .content(subtask.getContent())
+                            .position(subtask.getPosition())
+                            .isComplete(false)
+                            .task(newTask)
+                            .build()
+            ).toList();
+        }
+
+        List<Integer> expForSubTasks = this.calculateExpForSubTasks(totalExp, subtasks.size());
+
+        for (int i = 0; i < subtasks.size(); i++) {
+            int currentExp = expForSubTasks.get(i);
+
+            subtasks.get(i).setExp(currentExp);
+        }
+
+        newTask.setSubTasks(subtasks);
 
         return taskRepository.save(newTask);
     }
@@ -158,5 +185,28 @@ public class TaskServiceImpl implements TaskService {
 
         int baseExp = 10;
         return baseExp * priority.getWeight() + estimatedTime;
+    }
+
+    private List<Integer> calculateExpForSubTasks(int totalExp, int numberOfSubTasks) {
+        if (numberOfSubTasks <= 0) {
+            return new ArrayList<>();
+        }
+
+        int baseExp = totalExp / numberOfSubTasks;
+        int remainder = totalExp % numberOfSubTasks;
+
+        List<Integer> expValues = new ArrayList<>();
+
+        for (int i = 0; i < numberOfSubTasks; i++) {
+            int exp = baseExp;
+
+            if (i < remainder) {
+                exp++;
+            }
+
+            expValues.add(exp);
+        }
+
+        return expValues;
     }
 }
