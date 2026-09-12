@@ -49,6 +49,9 @@ public class Tasks {
     @Column(nullable = false)
     private int estimateMin;
 
+    @Column(nullable = false)
+    private int totalExp;
+
     @Column
     private LocalDateTime startedAt;
 

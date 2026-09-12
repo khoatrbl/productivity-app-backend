@@ -1,5 +1,6 @@
 package com.khoatrbl.productivity.services.impl;
 
+import com.khoatrbl.productivity.domains.Priority;
 import com.khoatrbl.productivity.domains.Status;
 import com.khoatrbl.productivity.domains.dtos.CreateTaskRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
@@ -50,16 +51,16 @@ public class TaskServiceImpl implements TaskService {
                 .build();
 
         int estimateTime = this.estimateTime(newTask);
-
         newTask.setEstimateMin(estimateTime);
+
+        int totalExp = this.calculateTaskTotalExp(createTaskRequest.getPriority(), estimateTime);
+        newTask.setTotalExp(totalExp);
 
         return taskRepository.save(newTask);
     }
 
     @Override
     public Tasks updateTaskData(UUID userId, UUID taskId, UpdateTaskRequest updateTaskRequest) {
-
-        // TODO: Add in estimated min calculation
 
         Tasks taskToUpdate = taskRepository.findByIdAndUserId(taskId, userId)
                 .orElseThrow(
@@ -71,7 +72,10 @@ public class TaskServiceImpl implements TaskService {
         taskToUpdate.setDueDate(updateTaskRequest.getDueDate());
         taskToUpdate.setDueTime(updateTaskRequest.getDueTime());
         taskToUpdate.setPriority(updateTaskRequest.getPriority());
-        taskToUpdate.setEstimateMin(this.estimateTime(taskToUpdate));
+
+        int estimateTime = this.estimateTime(taskToUpdate);
+        taskToUpdate.setEstimateMin(estimateTime);
+        taskToUpdate.setTotalExp(this.calculateTaskTotalExp(updateTaskRequest.getPriority(), estimateTime));
 
         return taskRepository.save(taskToUpdate);
     }
@@ -120,9 +124,39 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private int estimateTime(Tasks newTask) {
-        return taskEstimationService.estimateFromHistory(newTask)
+        int estimation = taskEstimationService.estimateFromHistory(newTask)
                 .orElseGet(
                         () -> taskEstimationService.estimateByPriorityBucket(newTask)
                 );
+
+        return roundToFriendlyInterval(estimation);
+    }
+
+    private int roundToFriendlyInterval(int minutes) {
+        int bucketSize = 0;
+
+        if (minutes <= 0) {
+            return bucketSize;
+        }
+
+        if (minutes <= 15) {
+            bucketSize = 5;
+        } else if (minutes <= 60) {
+            bucketSize = 15;
+        } else if (minutes <= 180) {
+            bucketSize = 30;   // 90, 120, 150, 180
+        } else {
+            bucketSize = 60;   // 240, 300, 360... hourly beyond 3h
+        }
+
+        return (int) (Math.ceil((double) minutes / bucketSize) * bucketSize);
+    }
+
+    private int calculateTaskTotalExp(Priority priority, int estimatedTime) {
+        // formula:
+        // total = base * priorityIndex + estimatedTime
+
+        int baseExp = 10;
+        return baseExp * priority.getWeight() + estimatedTime;
     }
 }
