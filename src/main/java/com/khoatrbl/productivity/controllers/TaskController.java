@@ -115,6 +115,7 @@ public class TaskController {
                 .dueDate(taskToUpdate.getDueDate())
                 .dueTime(taskToUpdate.getDueTime())
                 .estimateMin(taskToUpdate.getEstimateMin())
+                .totalExp(taskToUpdate.getTotalExp())
                 .startedAt(taskToUpdate.getStartedAt())
                 .completeAt(taskToUpdate.getCompletedAt())
                 .priority(taskToUpdate.getPriority())
