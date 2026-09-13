@@ -2,10 +2,7 @@ package com.khoatrbl.productivity.services.impl;
 
 import com.khoatrbl.productivity.domains.Priority;
 import com.khoatrbl.productivity.domains.Status;
-import com.khoatrbl.productivity.domains.dtos.CreateTaskRequest;
-import com.khoatrbl.productivity.domains.dtos.SubTaskDto;
-import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
-import com.khoatrbl.productivity.domains.dtos.UpdateTaskStatusRequest;
+import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.SubTasks;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.domains.entities.Users;
@@ -20,14 +17,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
+    private final SubTaskRepository subTaskRepository;
     private final TaskEstimationService taskEstimationService;
     private final UserRepository userRepository;
 
@@ -60,26 +57,7 @@ public class TaskServiceImpl implements TaskService {
         int totalExp = this.calculateTaskTotalExp(createTaskRequest.getPriority(), estimateTime);
         newTask.setTotalExp(totalExp);
 
-        List<SubTasks> subtasks = new ArrayList<>();
-
-        if (!createTaskRequest.getSubTasks().isEmpty()) {
-            subtasks = createTaskRequest.getSubTasks().stream().map(
-                    subtask -> SubTasks.builder()
-                            .content(subtask.getContent())
-                            .position(subtask.getPosition())
-                            .isComplete(false)
-                            .task(newTask)
-                            .build()
-            ).toList();
-        }
-
-        List<Integer> expForSubTasks = this.calculateExpForSubTasks(totalExp, subtasks.size());
-
-        for (int i = 0; i < subtasks.size(); i++) {
-            int currentExp = expForSubTasks.get(i);
-
-            subtasks.get(i).setExp(currentExp);
-        }
+        List<SubTasks> subtasks = prepareSubTasksForCreate(newTask, createTaskRequest.getSubTasks(), totalExp);
 
         newTask.setSubTasks(subtasks);
 
@@ -102,7 +80,11 @@ public class TaskServiceImpl implements TaskService {
 
         int estimateTime = this.estimateTime(taskToUpdate);
         taskToUpdate.setEstimateMin(estimateTime);
-        taskToUpdate.setTotalExp(this.calculateTaskTotalExp(updateTaskRequest.getPriority(), estimateTime));
+
+        int totalExp = this.calculateTaskTotalExp(updateTaskRequest.getPriority(), estimateTime);
+        taskToUpdate.setTotalExp(totalExp);
+
+        updateSubTasks(taskToUpdate, updateTaskRequest.getSubTasks(), totalExp);
 
         return taskRepository.save(taskToUpdate);
     }
@@ -209,4 +191,89 @@ public class TaskServiceImpl implements TaskService {
 
         return expValues;
     }
+
+    private List<SubTasks> prepareSubTasksForCreate(Tasks task, List<CreateSubTaskRequest> createSubTaskRequests, int totalExp) {
+        List<SubTasks> subtasks = new ArrayList<>();
+
+        if (!createSubTaskRequests.isEmpty()) {
+            subtasks = createSubTaskRequests.stream().map(
+                    subtask -> SubTasks.builder()
+                            .content(subtask.getContent())
+                            .position(subtask.getPosition())
+                            .isComplete(false)
+                            .task(task)
+                            .build()
+            ).toList();
+        }
+
+        List<Integer> expForSubTasks = this.calculateExpForSubTasks(totalExp, subtasks.size());
+
+        for (int i = 0; i < subtasks.size(); i++) {
+            int currentExp = expForSubTasks.get(i);
+
+            subtasks.get(i).setExp(currentExp);
+        }
+
+        return subtasks;
+    }
+
+    private void updateSubTasks(Tasks task, List<UpdateSubTaskRequest> updateSubTaskRequests, int totalExp) {
+
+        Map<UUID, SubTasks> existingSubTasks = task.getSubTasks()
+                .stream()
+                .collect(Collectors.toMap(
+                        SubTasks::getId,
+                        subTask -> subTask
+                ));
+
+        Set<UUID> incomingIds = updateSubTaskRequests.stream()
+                .map(UpdateSubTaskRequest::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        List<SubTasks> existingSubtasks = task.getSubTasks();
+
+        // Remove subtasks that are no longer present
+        existingSubtasks.removeIf(
+                subTask -> !incomingIds.contains(subTask.getId())
+        );
+
+
+
+        for (UpdateSubTaskRequest request : updateSubTaskRequests) {
+            if (request.getId() == null) {
+                SubTasks newSubTask = SubTasks.builder()
+                        .content(request.getContent())
+                        .position(request.getPosition())
+                        .task(task)
+                        .isComplete(false)
+                        .build();
+
+                existingSubtasks.add(newSubTask);
+            } else {
+                SubTasks existingSubtask = existingSubTasks.get(request.getId());
+
+                if (existingSubtask == null) {
+                    throw new EntityNotFoundException("Subtask not found for id: " + request.getId());
+                }
+
+                existingSubtask.setContent(request.getContent());
+                existingSubtask.setComplete(request.isComplete());
+                existingSubtask.setPosition(request.getPosition());
+
+                existingSubtasks.add(existingSubtask);
+            }
+        }
+
+        List<Integer> expForSubTasks = this.calculateExpForSubTasks(totalExp, existingSubtasks.size());
+
+        for (int i = 0; i < existingSubtasks.size(); i++) {
+            int currentExp = expForSubTasks.get(i);
+
+            existingSubtasks.get(i).setExp(currentExp);
+        }
+
+        task.setSubTasks(existingSubtasks);
+    }
+
 }

@@ -11,10 +11,13 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class CreateSubTaskRequest {
+public class UpdateSubTaskRequest {
+    @NotBlank(message = "Subtask ID is required.")
+    private UUID id;
+
     @NotBlank(message = "Subtask content is required.")
     @Size(min = 1, max = 40, message = "Subtask content must be between {min} and {max} characters.")
     private String content;
@@ -22,5 +25,6 @@ public class CreateSubTaskRequest {
     @NotNull(message = "Subtask position is required.")
     private int position;
 
-
+    @NotNull(message = "Subtask status is required.")
+    private boolean isComplete;
 }
