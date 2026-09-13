@@ -1,5 +1,7 @@
 package com.khoatrbl.productivity.domains.dtos;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.khoatrbl.productivity.domains.Priority;
 import com.khoatrbl.productivity.domains.Status;
 import jakarta.validation.constraints.*;
@@ -40,5 +42,7 @@ public class CreateTaskRequest {
     @NotNull(message = "Task priority is required.")
     private Priority priority;
 
+    @Builder.Default
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     private List<CreateSubTaskRequest> subTasks = new ArrayList<>();
 }
