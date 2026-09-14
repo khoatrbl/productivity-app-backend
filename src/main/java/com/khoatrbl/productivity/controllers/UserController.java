@@ -2,6 +2,7 @@ package com.khoatrbl.productivity.controllers;
 
 import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.Users;
+import com.khoatrbl.productivity.mappers.LevelMapper;
 import com.khoatrbl.productivity.utilities.SecurityUtils;
 import com.khoatrbl.productivity.services.UserService;
 import jakarta.validation.Valid;
@@ -29,6 +30,8 @@ public class UserController {
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
                 .timezone(user.getTimezone())
+                .currentLevel(LevelMapper.toDto(user.getCurrentLevel()))
+                .currentExp(user.getCurrentExp())
                 .build();
 
         return new ResponseEntity<>(profileDto, HttpStatus.OK);
@@ -61,4 +64,23 @@ public class UserController {
 
         return new ResponseEntity<>(new UpdatePasswordResponse(), HttpStatus.OK);
     }
+
+    @PatchMapping(path = "/level")
+    public ResponseEntity<UpdateLevelResponse> updateUserLevel(
+            @Valid @RequestBody UpdateLevelRequest updateLevelRequest,
+            Authentication authentication) {
+
+        UUID userId = SecurityUtils.getCurrentUserId(authentication);
+
+        Users user = userService.updateUserLevel(userId, updateLevelRequest);
+
+        UpdateLevelResponse res = UpdateLevelResponse.builder()
+                .currentLevel(LevelMapper.toDto(user.getCurrentLevel()))
+                .currentExp(user.getCurrentExp())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+
 }

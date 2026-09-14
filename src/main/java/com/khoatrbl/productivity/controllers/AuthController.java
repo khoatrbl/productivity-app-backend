@@ -5,6 +5,7 @@ import com.khoatrbl.productivity.domains.dtos.LogInResponse;
 import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
 import com.khoatrbl.productivity.domains.dtos.RegisterResponse;
 import com.khoatrbl.productivity.domains.entities.Users;
+import com.khoatrbl.productivity.mappers.LevelMapper;
 import com.khoatrbl.productivity.services.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,8 @@ public class AuthController {
                 .email(newUser.getEmail())
                 .displayName(newUser.getDisplayName())
                 .timezone(newUser.getTimezone())
+                .currentExp(newUser.getCurrentExp())
+                .currentLevel(LevelMapper.toDto(newUser.getCurrentLevel()))
                 .build();
 
         return new ResponseEntity<>(res, HttpStatus.CREATED);

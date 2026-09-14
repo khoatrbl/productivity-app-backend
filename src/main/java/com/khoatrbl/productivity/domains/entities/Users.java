@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +43,13 @@ public class Users {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Tasks> tasksList = new ArrayList<>();
+
+    @Column(nullable = false)
+    private int currentExp;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_level_id", nullable = false)
+    private Level currentLevel;
 
     @PrePersist
     protected void onCreate() {

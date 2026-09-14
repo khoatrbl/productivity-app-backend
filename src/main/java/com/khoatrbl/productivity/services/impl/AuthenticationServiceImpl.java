@@ -1,10 +1,12 @@
 package com.khoatrbl.productivity.services.impl;
 
 import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
+import com.khoatrbl.productivity.domains.entities.Level;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
 import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
 import com.khoatrbl.productivity.exceptions.PasswordsNotMatchException;
+import com.khoatrbl.productivity.repositories.LevelRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.security.CustomUserDetails;
 import com.khoatrbl.productivity.security.CustomUserDetailsService;
@@ -12,6 +14,7 @@ import com.khoatrbl.productivity.services.AuthenticationService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,6 +36,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService customUserDetailsService;
     private final UserRepository userRepository;
+    private final LevelRepository levelRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.secret}")
@@ -100,12 +104,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String hashedPassword = passwordEncoder.encode(registerRequest.getRawPassword());
 
+        Level startingLevel = levelRepository.findByLevel(1)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Level not found for level 1.")
+                );
+
         Users newUser = Users.builder()
                 .email(registerRequest.getEmail())
                 .displayName(registerRequest.getDisplayName())
                 .passwordHash(hashedPassword)
                 .role("USER")
                 .timezone(registerRequest.getTimezone())
+                .currentExp(0)
+                .currentLevel(startingLevel)
                 .build();
 
         return userRepository.save(newUser);

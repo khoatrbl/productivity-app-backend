@@ -9,11 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class RegisterResponse {
-    private String email;
-    private String displayName;
-    private String timezone;
-    private LevelDto currentLevel;
-    private int currentExp;
-
+public class LevelDto {
+    private int level;
+    private int threshold;
 }

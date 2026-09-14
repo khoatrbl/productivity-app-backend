@@ -1,5 +1,6 @@
 package com.khoatrbl.productivity.services;
 
+import com.khoatrbl.productivity.domains.dtos.UpdateLevelRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdatePasswordRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdateProfileRequest;
 import com.khoatrbl.productivity.domains.entities.Users;
@@ -16,5 +17,7 @@ public interface UserService {
 
     List<Users> getAllUsers();
 
-    Users updateUserPassword(UUID id, UpdatePasswordRequest updatePasswordRequest);
+    void updateUserPassword(UUID id, UpdatePasswordRequest updatePasswordRequest);
+
+    Users updateUserLevel(UUID id, UpdateLevelRequest updateLevelRequest);
 }
