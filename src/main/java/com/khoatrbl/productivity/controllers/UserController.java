@@ -32,6 +32,7 @@ public class UserController {
                 .timezone(user.getTimezone())
                 .currentLevel(LevelMapper.toDto(user.getCurrentLevel()))
                 .currentExp(user.getCurrentExp())
+                .coins(user.getCoins())
                 .build();
 
         return new ResponseEntity<>(profileDto, HttpStatus.OK);
@@ -81,6 +82,23 @@ public class UserController {
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
+
+    @PatchMapping(path = "/coins")
+    public ResponseEntity<UpdateCoinsResponse> updateUserCoins(
+            @Valid @RequestBody UpdateCoinsRequest updateCoinsRequest,
+            Authentication authentication) {
+
+        UUID userId = SecurityUtils.getCurrentUserId(authentication);
+
+        Users user = userService.updateUserCoins(userId, updateCoinsRequest);
+
+        UpdateCoinsResponse res = UpdateCoinsResponse.builder()
+                .coins(user.getCoins())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
 
 
 }

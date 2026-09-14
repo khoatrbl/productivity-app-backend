@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
-    private final LevelRepository levelRepository;
     private final TaskEstimationService taskEstimationService;
     private final UserRepository userRepository;
 

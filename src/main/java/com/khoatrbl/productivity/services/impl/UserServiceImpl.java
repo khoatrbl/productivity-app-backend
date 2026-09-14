@@ -1,5 +1,6 @@
 package com.khoatrbl.productivity.services.impl;
 
+import com.khoatrbl.productivity.domains.dtos.UpdateCoinsRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdateLevelRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdatePasswordRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdateProfileRequest;
@@ -120,5 +121,18 @@ public class UserServiceImpl implements UserService {
         }
 
         return userRepository.save(currentUser);
+    }
+
+    @Override
+    public Users updateUserCoins(UUID id, UpdateCoinsRequest updateCoinsRequest) {
+        Users user = userRepository.findById(id)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("User not found for id: " + id)
+                );
+
+        int currentCoins = user.getCoins();
+
+        user.setCoins(currentCoins + updateCoinsRequest.getAmount());
+        return userRepository.save(user);
     }
 }

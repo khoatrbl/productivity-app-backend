@@ -51,6 +51,9 @@ public class Users {
     @JoinColumn(name = "current_level_id", nullable = false)
     private Level currentLevel;
 
+    @Column(nullable = false)
+    private int coins;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

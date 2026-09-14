@@ -9,11 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProfileDto {
-    private String email;
-    private String displayName;
-    private String timezone;
-    private LevelDto currentLevel;
-    private int currentExp;
+public class UpdateCoinsResponse {
     private int coins;
 }
