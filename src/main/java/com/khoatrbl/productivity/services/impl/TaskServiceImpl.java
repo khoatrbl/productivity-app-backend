@@ -6,8 +6,6 @@ import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.SubTasks;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.domains.entities.Users;
-import com.khoatrbl.productivity.repositories.LevelRepository;
-import com.khoatrbl.productivity.repositories.SubTaskRepository;
 import com.khoatrbl.productivity.repositories.TaskRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.services.TaskEstimationService;
@@ -57,8 +55,10 @@ public class TaskServiceImpl implements TaskService {
         int totalExp = this.calculateTaskTotalExp(createTaskRequest.getPriority(), estimateTime);
         newTask.setTotalExp(totalExp);
 
-        List<SubTasks> subtasks = prepareSubTasksForCreate(newTask, createTaskRequest.getSubTasks(), totalExp);
+        int coins = this.calculateCoinsForTask(createTaskRequest.getPriority());
+        newTask.setCoins(coins);
 
+        List<SubTasks> subtasks = prepareSubTasksForCreate(newTask, createTaskRequest.getSubTasks(), totalExp);
         newTask.setSubTasks(subtasks);
 
         return taskRepository.save(newTask);
@@ -167,6 +167,11 @@ public class TaskServiceImpl implements TaskService {
 
         int baseExp = 10;
         return baseExp * priority.getWeight() + estimatedTime;
+    }
+
+    private int calculateCoinsForTask(Priority priority) {
+        int baseCoins = 5;
+        return (int) Math.ceil((double) (baseCoins * priority.getWeight()) / 2);
     }
 
     private List<Integer> calculateExpForSubTasks(int totalExp, int numberOfSubTasks) {

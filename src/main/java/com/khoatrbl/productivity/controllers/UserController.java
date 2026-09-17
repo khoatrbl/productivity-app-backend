@@ -66,16 +66,16 @@ public class UserController {
         return new ResponseEntity<>(new UpdatePasswordResponse(), HttpStatus.OK);
     }
 
-    @PatchMapping(path = "/level")
-    public ResponseEntity<UpdateLevelResponse> updateUserLevel(
-            @Valid @RequestBody UpdateLevelRequest updateLevelRequest,
+    @PatchMapping(path = "/exp")
+    public ResponseEntity<UpdateExpResponse> updateUserLevel(
+            @Valid @RequestBody UpdateExpRequest updateExpRequest,
             Authentication authentication) {
 
         UUID userId = SecurityUtils.getCurrentUserId(authentication);
 
-        Users user = userService.updateUserLevel(userId, updateLevelRequest);
+        Users user = userService.updateUserLevel(userId, updateExpRequest);
 
-        UpdateLevelResponse res = UpdateLevelResponse.builder()
+        UpdateExpResponse res = UpdateExpResponse.builder()
                 .currentLevel(LevelMapper.toDto(user.getCurrentLevel()))
                 .currentExp(user.getCurrentExp())
                 .build();
@@ -93,7 +93,7 @@ public class UserController {
         Users user = userService.updateUserCoins(userId, updateCoinsRequest);
 
         UpdateCoinsResponse res = UpdateCoinsResponse.builder()
-                .coins(user.getCoins())
+                .currentCoins(user.getCoins())
                 .build();
 
         return new ResponseEntity<>(res, HttpStatus.OK);

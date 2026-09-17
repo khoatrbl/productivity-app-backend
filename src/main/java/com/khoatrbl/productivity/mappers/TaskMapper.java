@@ -2,10 +2,7 @@ package com.khoatrbl.productivity.mappers;
 
 import com.khoatrbl.productivity.domains.dtos.TaskDto;
 import com.khoatrbl.productivity.domains.entities.Tasks;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.NoArgsConstructor;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 
@@ -20,6 +17,7 @@ public class TaskMapper {
                 .dueTime(task.getDueTime())
                 .estimateMin(task.getEstimateMin())
                 .totalExp(task.getTotalExp())
+                .totalCoins(task.getCoins())
                 .startedAt(task.getStartedAt())
                 .completeAt(task.getCompletedAt())
                 .priority(task.getPriority())

@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class UpdateCoinsResponse {
-    private int coins;
+    private int currentCoins;
 }

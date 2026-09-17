@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+//                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/quotes").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/quotes").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/quotes/{id}").hasRole("ADMIN")

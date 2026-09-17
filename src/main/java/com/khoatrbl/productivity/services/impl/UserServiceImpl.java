@@ -1,7 +1,7 @@
 package com.khoatrbl.productivity.services.impl;
 
 import com.khoatrbl.productivity.domains.dtos.UpdateCoinsRequest;
-import com.khoatrbl.productivity.domains.dtos.UpdateLevelRequest;
+import com.khoatrbl.productivity.domains.dtos.UpdateExpRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdatePasswordRequest;
 import com.khoatrbl.productivity.domains.dtos.UpdateProfileRequest;
 import com.khoatrbl.productivity.domains.entities.Level;
@@ -87,7 +87,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Users updateUserLevel(UUID id, UpdateLevelRequest updateLevelRequest) {
+    public Users updateUserLevel(UUID id, UpdateExpRequest updateExpRequest) {
         Users currentUser = userRepository.findById(id)
                 .orElseThrow(
                         () -> new EntityNotFoundException("User not found for id: " + id)
@@ -95,7 +95,7 @@ public class UserServiceImpl implements UserService {
 
         Level currentUserLevel = currentUser.getCurrentLevel();
         int currentExp = currentUser.getCurrentExp();
-        int gain = updateLevelRequest.getExpGained();
+        int gain = updateExpRequest.getExpGained();
         int maxXpOfLevel = levelRepository.findByLevel(currentUserLevel.getLevel())
                 .orElseThrow(
                         () -> new EntityNotFoundException("Level not found for level: " + currentUserLevel.getLevel())

@@ -54,6 +54,9 @@ public class Tasks {
     @Column(nullable = false)
     private int totalExp;
 
+    @Column()
+    private int coins;
+
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SubTasks> subTasks = new ArrayList<>();
 

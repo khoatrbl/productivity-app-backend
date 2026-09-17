@@ -22,7 +22,7 @@ import java.util.List;
 @Builder
 public class CreateTaskRequest {
     @NotBlank(message = "Task title is required.")
-    @Size(min = 1, max = 255, message = "Task title must be between {min} and {max} characters.")
+    @Size(min = 1, max = 50, message = "Task title must be between {min} and {max} characters.")
     @Pattern(
             regexp = "^[^\\r\\n]*$",
             message = "Title cannot contain line breaks."

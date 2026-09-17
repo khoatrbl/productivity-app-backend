@@ -25,6 +25,7 @@ public class TaskDto {
     private LocalTime dueTime;
     private int estimateMin;
     private int totalExp;
+    private int totalCoins;
     private List<SubTaskDto> subTasks;
     private LocalDateTime startedAt;
     private LocalDateTime completeAt;

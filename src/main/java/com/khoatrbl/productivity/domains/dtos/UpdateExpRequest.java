@@ -1,6 +1,5 @@
 package com.khoatrbl.productivity.domains.dtos;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UpdateLevelRequest {
+public class UpdateExpRequest {
     @NotNull(message = "Exp gained is required.")
     private int expGained;
 }

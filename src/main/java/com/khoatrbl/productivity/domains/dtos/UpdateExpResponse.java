@@ -6,7 +6,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateLevelResponse {
+public class UpdateExpResponse {
     private LevelDto currentLevel;
     private int currentExp;
 }
