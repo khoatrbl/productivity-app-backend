@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface QuoteService {
     List<Quotes> getAllQuotes();
 
-    Quotes getRandomQuote();
+    Quotes getDailyQuote(UUID currentUserId);
 
     Quotes createQuote(CreateQuoteRequest createQuoteRequest);
 

@@ -3,11 +3,14 @@ package com.khoatrbl.productivity.controllers;
 import com.khoatrbl.productivity.domains.dtos.CreateQuoteRequest;
 import com.khoatrbl.productivity.domains.dtos.QuoteDto;
 import com.khoatrbl.productivity.domains.entities.Quotes;
+import com.khoatrbl.productivity.mappers.QuoteMapper;
 import com.khoatrbl.productivity.services.QuoteService;
+import com.khoatrbl.productivity.utilities.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,28 +26,18 @@ public class QuoteController {
     public ResponseEntity<List<QuoteDto>> getAllQuotes() {
         List<Quotes> quoteList = quoteService.getAllQuotes();
 
-        List<QuoteDto> res = quoteList.stream().map(quote ->
-                QuoteDto.builder()
-                        .quoteId(quote.getId())
-                        .text(quote.getText())
-                        .author(quote.getAuthor())
-                        .category(quote.getCategory())
-                        .build()
-        ).toList();
+        List<QuoteDto> res = quoteList.stream().map(QuoteMapper::toDto).toList();
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
-    @GetMapping(path = "/random")
-    public ResponseEntity<QuoteDto> getRandomQuote() {
-        Quotes quote = quoteService.getRandomQuote();
+    @GetMapping(path = "/daily")
+    public ResponseEntity<QuoteDto> getDailyQuote(Authentication authentication) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
 
-        QuoteDto dto = QuoteDto.builder()
-                .quoteId(quote.getId())
-                .text(quote.getText())
-                .author(quote.getAuthor())
-                .category(quote.getCategory())
-                .build();
+        Quotes quote = quoteService.getDailyQuote(currentUserId);
+
+        QuoteDto dto = QuoteMapper.toDto(quote);
 
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
@@ -53,12 +46,7 @@ public class QuoteController {
     public ResponseEntity<QuoteDto> createQuote(@Valid @RequestBody CreateQuoteRequest createQuoteRequest) {
         Quotes quote = quoteService.createQuote(createQuoteRequest);
 
-        QuoteDto dto = QuoteDto.builder()
-                .quoteId(quote.getId())
-                .text(quote.getText())
-                .author(quote.getAuthor())
-                .category(quote.getCategory())
-                .build();
+        QuoteDto dto = QuoteMapper.toDto(quote);
 
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }

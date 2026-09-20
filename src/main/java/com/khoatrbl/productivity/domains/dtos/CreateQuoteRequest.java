@@ -15,18 +15,31 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class CreateQuoteRequest {
-    @NotBlank(message = "Quote content is required.")
-    @Size(max = 2000, message = "Quote text cannot exceed {max} characters.")
+
+    @NotBlank(message = "Quote label is required.")
+    @Size(max = 20, message = "Quote label must not exceed {max} characters.")
     @Pattern(
             regexp = "^[^\\r\\n]*$",
-            message = "Quote text cannot contain line breaks."
+            message = "Quote label must not contain line breaks."
     )
-    private String text;
+    private String label;
+
+    @NotBlank(message = "Quote title is required.")
+    @Size(max = 25, message = "Quote title cannot exceed {max} characters.")
+    @Pattern(
+            regexp = "^[^\\r\\n]*$",
+            message = "Quote title cannot contain line breaks."
+    )
+    private String title;
+
+    @NotBlank(message = "Quote is required.")
+    @Size(max = 120, message = "Quote must not exceed {max} characters.")
+    private String quote;
 
     @NotBlank(message = "Quote author is required.")
-    @Size(max = 255, message = "Author name cannot exceed {max} characters.")
+    @Size(max = 30, message = "Author name cannot exceed {max} characters.")
     private String author;
 
-    @NotNull(message = "Quote category is required.")
-    private QuoteCategory quoteCategory;
+    @NotNull(message = "Quote's EXP is required.")
+    private int calmExp;
 }

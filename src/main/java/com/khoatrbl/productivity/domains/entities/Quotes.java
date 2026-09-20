@@ -19,15 +19,20 @@ public class Quotes {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false)
+    private String label;
+
+    @Column(nullable = false)
+    private String title;
+
     @Column(columnDefinition = "TEXT", nullable = false)
-    private String text;
+    private String quote;
 
     @Column(nullable = false)
     private String author;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private QuoteCategory category;
+    private int calmExp;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

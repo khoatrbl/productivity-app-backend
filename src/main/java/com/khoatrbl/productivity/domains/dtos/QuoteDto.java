@@ -14,7 +14,9 @@ import java.util.UUID;
 @Builder
 public class QuoteDto {
     private UUID quoteId;
-    private String text;
+    private String label;
+    private String title;
+    private String quote;
     private String author;
-    private QuoteCategory category;
+    private int calmExp;
 }

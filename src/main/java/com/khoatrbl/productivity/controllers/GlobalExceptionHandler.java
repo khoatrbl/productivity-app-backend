@@ -102,4 +102,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalStateException(IllegalStateException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+    }
+
 }
