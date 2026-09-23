@@ -8,6 +8,7 @@ import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.repositories.TaskRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
+import com.khoatrbl.productivity.services.RewardCalculationService;
 import com.khoatrbl.productivity.services.TaskEstimationService;
 import com.khoatrbl.productivity.services.TaskService;
 import com.khoatrbl.productivity.utilities.StringUtils;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
-    private final TaskEstimationService taskEstimationService;
+    private final RewardCalculationService rewardCalculationService;
     private final UserRepository userRepository;
 
     @Override
@@ -47,15 +48,16 @@ public class TaskServiceImpl implements TaskService {
                 .dueTime(createTaskRequest.getDueTime())
                 .priority(createTaskRequest.getPriority())
                 .status(Status.INCOMPLETE)
+                .sprintInMinutes(createTaskRequest.getSprintInMinutes())
                 .build();
 
-        int estimateTime = this.estimateTime(newTask);
+        int estimateTime = rewardCalculationService.estimateTime(newTask);
         newTask.setEstimateMin(estimateTime);
 
-        int totalExp = this.calculateTaskTotalExp(createTaskRequest.getPriority(), estimateTime);
+        int totalExp = rewardCalculationService.calculateTasksTotalExp(createTaskRequest.getPriority(), estimateTime);
         newTask.setTotalExp(totalExp);
 
-        int coins = this.calculateCoinsForTask(createTaskRequest.getPriority());
+        int coins = rewardCalculationService.calculateCoinForTask(createTaskRequest.getPriority());
         newTask.setCoins(coins);
 
         List<SubTasks> subtasks = prepareSubTasksForCreate(newTask, createTaskRequest.getSubTasks(), totalExp);
@@ -77,11 +79,12 @@ public class TaskServiceImpl implements TaskService {
         taskToUpdate.setDueDate(updateTaskRequest.getDueDate());
         taskToUpdate.setDueTime(updateTaskRequest.getDueTime());
         taskToUpdate.setPriority(updateTaskRequest.getPriority());
+        taskToUpdate.setSprintInMinutes(updateTaskRequest.getSprintInMinutes());
 
-        int estimateTime = this.estimateTime(taskToUpdate);
+        int estimateTime = rewardCalculationService.estimateTime(taskToUpdate);
         taskToUpdate.setEstimateMin(estimateTime);
 
-        int totalExp = this.calculateTaskTotalExp(updateTaskRequest.getPriority(), estimateTime);
+        int totalExp = rewardCalculationService.calculateTasksTotalExp(updateTaskRequest.getPriority(), estimateTime);
         taskToUpdate.setTotalExp(totalExp);
 
         updateSubTasks(taskToUpdate, updateTaskRequest.getSubTasks(), totalExp);
@@ -132,69 +135,29 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.delete(taskToDelete);
     }
 
-    private int estimateTime(Tasks newTask) {
-        int estimation = taskEstimationService.estimateFromHistory(newTask)
-                .orElseGet(
-                        () -> taskEstimationService.estimateByPriorityBucket(newTask)
-                );
+    @Override
+    public RewardEstimateResponse estimateReward(UUID userId, RewardEstimateRequest rewardEstimateRequest) {
+        // A reference proxy, not a real fetch — estimateFromHistory only ever
+        // calls .getUser().getId() off this, so no need to load the full entity.
+        Users userRef = userRepository.getReferenceById(userId);
 
-        return roundToFriendlyInterval(estimation);
-    }
+        Tasks transientTask = Tasks.builder()
+                .user(userRef)
+                .title(rewardEstimateRequest.getTitle() != null ? rewardEstimateRequest.getTitle() : "")
+                .priority(rewardEstimateRequest.getPriority())
+                .build(); // never persisted — exists only to satisfy the estimation methods' signatures
 
-    private int roundToFriendlyInterval(int minutes) {
-        int bucketSize = 0;
+        int estimatedMinutes = rewardCalculationService.estimateTime(transientTask);
+        int totalExp = rewardCalculationService.calculateTasksTotalExp(rewardEstimateRequest.getPriority(), estimatedMinutes);
+        int totalCoins = rewardCalculationService.calculateCoinForTask(rewardEstimateRequest.getPriority());
+        List<Integer> subTaskExp = rewardCalculationService.calculateExpForSubTasks(totalExp, rewardEstimateRequest.getSubTaskCount());
 
-        if (minutes <= 0) {
-            return bucketSize;
-        }
-
-        if (minutes <= 15) {
-            bucketSize = 5;
-        } else if (minutes <= 60) {
-            bucketSize = 15;
-        } else if (minutes <= 180) {
-            bucketSize = 30;   // 90, 120, 150, 180
-        } else {
-            bucketSize = 60;   // 240, 300, 360... hourly beyond 3h
-        }
-
-        return (int) (Math.ceil((double) minutes / bucketSize) * bucketSize);
-    }
-
-    private int calculateTaskTotalExp(Priority priority, int estimatedTime) {
-        // formula:
-        // total = base * priorityIndex + estimatedTime
-
-        int baseExp = 10;
-        return baseExp * priority.getWeight() + estimatedTime;
-    }
-
-    private int calculateCoinsForTask(Priority priority) {
-        int baseCoins = 5;
-        return (int) Math.ceil((double) (baseCoins * priority.getWeight()) / 2);
-    }
-
-    private List<Integer> calculateExpForSubTasks(int totalExp, int numberOfSubTasks) {
-        if (numberOfSubTasks <= 0) {
-            return new ArrayList<>();
-        }
-
-        int baseExp = totalExp / numberOfSubTasks;
-        int remainder = totalExp % numberOfSubTasks;
-
-        List<Integer> expValues = new ArrayList<>();
-
-        for (int i = 0; i < numberOfSubTasks; i++) {
-            int exp = baseExp;
-
-            if (i < remainder) {
-                exp++;
-            }
-
-            expValues.add(exp);
-        }
-
-        return expValues;
+        return RewardEstimateResponse.builder()
+                .estimatedMinutes(estimatedMinutes)
+                .totalExp(totalExp)
+                .totalCoins(totalCoins)
+                .subTaskExp(subTaskExp)
+                .build();
     }
 
     private List<SubTasks> prepareSubTasksForCreate(Tasks task, List<CreateSubTaskRequest> createSubTaskRequests, int totalExp) {
@@ -211,7 +174,7 @@ public class TaskServiceImpl implements TaskService {
             ).toList();
         }
 
-        List<Integer> expForSubTasks = this.calculateExpForSubTasks(totalExp, subtasks.size());
+        List<Integer> expForSubTasks = rewardCalculationService.calculateExpForSubTasks(totalExp, subtasks.size());
 
         for (int i = 0; i < subtasks.size(); i++) {
             int currentExp = expForSubTasks.get(i);
@@ -243,8 +206,6 @@ public class TaskServiceImpl implements TaskService {
                 subTask -> !incomingIds.contains(subTask.getId())
         );
 
-
-
         for (UpdateSubTaskRequest request : updateSubTaskRequests) {
             if (request.getId() == null) {
                 SubTasks newSubTask = SubTasks.builder()
@@ -270,7 +231,7 @@ public class TaskServiceImpl implements TaskService {
             }
         }
 
-        List<Integer> expForSubTasks = this.calculateExpForSubTasks(totalExp, existingSubtasks.size());
+        List<Integer> expForSubTasks = rewardCalculationService.calculateExpForSubTasks(totalExp, existingSubtasks.size());
 
         for (int i = 0; i < existingSubtasks.size(); i++) {
             int currentExp = expForSubTasks.get(i);

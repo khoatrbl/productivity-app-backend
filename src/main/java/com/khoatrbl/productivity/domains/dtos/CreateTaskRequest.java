@@ -42,6 +42,9 @@ public class CreateTaskRequest {
     @NotNull(message = "Task priority is required.")
     private Priority priority;
 
+    @NotNull(message = "Sprint interval is required.")
+    private int sprintInMinutes;
+
     @Builder.Default
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     private List<CreateSubTaskRequest> subTasks = new ArrayList<>();

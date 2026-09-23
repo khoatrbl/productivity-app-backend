@@ -38,7 +38,8 @@ public class TaskEstimationServiceImpl implements TaskEstimationService {
         ).toList();
 
         if (!exactMatches.isEmpty()) {
-            return Optional.of(recencyWeightedAverage(exactMatches));
+            Optional<Integer> avg = recencyWeightedAverage(exactMatches);
+            if (avg.isPresent()) return avg;
         }
 
         // 2. Fuzzy match via token overlap (Jaccard similarity) — catches
@@ -48,7 +49,8 @@ public class TaskEstimationServiceImpl implements TaskEstimationService {
                 .toList();
 
         if (!fuzzy.isEmpty()) {
-            return Optional.of(recencyWeightedAverage(fuzzy));
+            Optional<Integer> avg = recencyWeightedAverage(fuzzy);
+            if (avg.isPresent()) return avg;
         }
 
         return Optional.empty(); // cold start, fall back to priority-bucket median
@@ -80,26 +82,27 @@ public class TaskEstimationServiceImpl implements TaskEstimationService {
         return HARD_DEFAULTS.get(newTask.getPriority());
     }
 
-    private int recencyWeightedAverage(List<Tasks> matches) {
-
-        List<Tasks> sorted = new ArrayList<>(matches); // defensive copy — never assume caller's list is mutable
+    private Optional<Integer> recencyWeightedAverage(List<Tasks> matches) {
+        List<Tasks> sorted = new ArrayList<>(matches);
         sorted.sort(Comparator.comparing(Tasks::getCompletedAt));
 
         double weightSum = 0;
         double valueSum = 0;
         double decay = 0.7;
 
-        for (int i = 0; i < matches.size(); i++) {
-            double weight = Math.pow(decay, matches.size() - 1 - i);
-            long minutes = Duration.between(
-                    matches.get(i).getStartedAt(),
-                    matches.get(i).getCompletedAt()
-            ).toMinutes();
+        for (int i = 0; i < sorted.size(); i++) {
+            long minutes = Duration.between(sorted.get(i).getStartedAt(), sorted.get(i).getCompletedAt()).toMinutes();
+            if (minutes <= 0 || minutes > 480) continue;
 
+            double weight = Math.pow(decay, sorted.size() - 1 - i);
             valueSum += weight * minutes;
             weightSum += weight;
         }
-        return (int) Math.round(valueSum / weightSum);
+
+        if (weightSum == 0) {
+            return Optional.empty(); // every match was corrupted/outlier — let the caller fall back
+        }
+        return Optional.of((int) Math.round(valueSum / weightSum));
     }
 
     private double jaccardSimilarity(String a, String b) {
@@ -125,7 +128,7 @@ public class TaskEstimationServiceImpl implements TaskEstimationService {
     private List<Long> actualDurations(List<Tasks> tasks) {
         return tasks.stream()
                 .map(task -> Duration.between(task.getStartedAt(), task.getCompletedAt()).toMinutes())
-                .filter(duration -> duration > 0)
+                .filter(duration -> duration > 0 && duration <= 480) // cap at 8 hours — ADHD-friendly upper bound anyway
                 .sorted()
                 .toList();
     }
@@ -134,6 +137,8 @@ public class TaskEstimationServiceImpl implements TaskEstimationService {
         int n = sorted.size(), mid = n / 2;
         return n % 2 == 0 ? (sorted.get(mid - 1) + sorted.get(mid)) / 2.0 : sorted.get(mid);
     }
+
+
 
 
 

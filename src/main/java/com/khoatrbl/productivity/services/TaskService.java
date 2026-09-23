@@ -1,8 +1,6 @@
 package com.khoatrbl.productivity.services;
 
-import com.khoatrbl.productivity.domains.dtos.CreateTaskRequest;
-import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
-import com.khoatrbl.productivity.domains.dtos.UpdateTaskStatusRequest;
+import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 
 import java.util.List;
@@ -18,4 +16,7 @@ public interface TaskService {
     Tasks updateTaskStatus(UUID userId, UUID taskId, UpdateTaskStatusRequest updateTaskStatusRequest);
 
     void deleteTask(UUID userId, UUID taskId);
+
+    RewardEstimateResponse estimateReward(UUID userId, RewardEstimateRequest rewardEstimateRequest);
+
 }

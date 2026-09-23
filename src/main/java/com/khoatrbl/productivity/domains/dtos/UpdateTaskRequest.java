@@ -39,6 +39,9 @@ public class UpdateTaskRequest {
     @NotNull(message = "Task priority is required.")
     private Priority priority;
 
+    @NotNull(message = "Sprint interval is required.")
+    private int sprintInMinutes;
+
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     @Builder.Default
     private List<UpdateSubTaskRequest> subTasks = new ArrayList<>();

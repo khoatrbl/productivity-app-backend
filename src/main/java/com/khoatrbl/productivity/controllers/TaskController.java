@@ -1,9 +1,6 @@
 package com.khoatrbl.productivity.controllers;
 
-import com.khoatrbl.productivity.domains.dtos.CreateTaskRequest;
-import com.khoatrbl.productivity.domains.dtos.TaskDto;
-import com.khoatrbl.productivity.domains.dtos.UpdateTaskRequest;
-import com.khoatrbl.productivity.domains.dtos.UpdateTaskStatusRequest;
+import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.mappers.TaskMapper;
 import com.khoatrbl.productivity.utilities.SecurityUtils;
@@ -37,6 +34,15 @@ public class TaskController {
 
 
         return new ResponseEntity<>(res, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/reward-estimate")
+    public ResponseEntity<RewardEstimateResponse> estimateReward(
+            @Valid @RequestBody RewardEstimateRequest rewardEstimateRequest,
+            Authentication authentication) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
+        return ResponseEntity.ok(taskService.estimateReward(currentUserId, rewardEstimateRequest));
     }
 
     @GetMapping

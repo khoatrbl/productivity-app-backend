@@ -22,6 +22,7 @@ public class TaskMapper {
                 .completeAt(task.getCompletedAt())
                 .priority(task.getPriority())
                 .status(task.getStatus())
+                .sprintInMinutes(task.getSprintInMinutes())
                 .subTasks(task.getSubTasks() != null ?
                         task.getSubTasks().stream().map(SubTaskMapper::toSubTaskDto).toList() : new ArrayList<>())
                 .build();

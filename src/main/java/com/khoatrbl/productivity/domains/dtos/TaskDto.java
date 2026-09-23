@@ -31,4 +31,5 @@ public class TaskDto {
     private LocalDateTime completeAt;
     private Priority priority;
     private Status status;
+    private int sprintInMinutes;
 }
