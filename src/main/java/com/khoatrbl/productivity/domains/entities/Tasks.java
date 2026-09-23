@@ -69,6 +69,12 @@ public class Tasks {
     @Column
     private LocalDateTime completedAt;
 
+    @Column
+    private Integer totalFocusedSeconds; // accumulated real focus time, never includes paused gaps
+
+    @Column
+    private LocalDateTime currentSessionStartedAt; // set on IN_PROGRESS, cleared on pause/complete
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

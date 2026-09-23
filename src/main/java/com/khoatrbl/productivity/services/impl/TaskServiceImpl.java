@@ -16,6 +16,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -99,29 +100,33 @@ public class TaskServiceImpl implements TaskService {
                                 () -> new EntityNotFoundException("Task not found for id: " + taskId)
                         );
 
+        Status oldStatus = taskToUpdate.getStatus();
         Status newStatus = updateTaskStatusRequest.getTaskStatus();
+        LocalDateTime now = LocalDateTime.now();
 
-        switch (newStatus) {
-            case IN_PROGRESS:
-                if (taskToUpdate.getStartedAt() == null) {
-                    taskToUpdate.setStartedAt(LocalDateTime.now());
-                }
-                taskToUpdate.setStatus(Status.IN_PROGRESS);
-                break;
+        boolean startingSession = newStatus == Status.IN_PROGRESS && oldStatus != Status.IN_PROGRESS;
+        boolean closingSession = oldStatus == Status.IN_PROGRESS && newStatus != Status.IN_PROGRESS;
 
-            case COMPLETE:
-                if (taskToUpdate.getCompletedAt() == null) {
-                    taskToUpdate.setCompletedAt(LocalDateTime.now());
-                }
-                taskToUpdate.setStatus(Status.COMPLETE);
-                break;
+        if (startingSession) {
+            if (taskToUpdate.getStartedAt() == null) {
+                taskToUpdate.setStartedAt(now); // first-ever start, kept for record/UI only — no longer feeds duration math
+            }
+            taskToUpdate.setCurrentSessionStartedAt(now);
 
-            case INCOMPLETE:
-                taskToUpdate.setStatus(Status.INCOMPLETE);
-                taskToUpdate.setCompletedAt(null);
-                break;
+        } else if (closingSession && taskToUpdate.getCurrentSessionStartedAt() != null) {
+
+            long sessionSeconds = Duration.between(taskToUpdate.getCurrentSessionStartedAt(), now).getSeconds();
+            int previousTotal = taskToUpdate.getTotalFocusedSeconds() != null ? taskToUpdate.getTotalFocusedSeconds() : 0;
+
+            taskToUpdate.setTotalFocusedSeconds(previousTotal + (int) Math.max(sessionSeconds, 0));
+            taskToUpdate.setCurrentSessionStartedAt(null);
         }
 
+        if (newStatus == Status.COMPLETE) {
+            taskToUpdate.setCompletedAt(now);
+        }
+
+        taskToUpdate.setStatus(newStatus);
         return taskRepository.save(taskToUpdate);
     }
 

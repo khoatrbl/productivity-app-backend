@@ -91,7 +91,10 @@ public class TaskEstimationServiceImpl implements TaskEstimationService {
         double decay = 0.7;
 
         for (int i = 0; i < sorted.size(); i++) {
-            long minutes = Duration.between(sorted.get(i).getStartedAt(), sorted.get(i).getCompletedAt()).toMinutes();
+            Integer focusedSeconds = sorted.get(i).getTotalFocusedSeconds();
+            if (focusedSeconds == null) continue;
+
+            long minutes = focusedSeconds / 60L;
             if (minutes <= 0 || minutes > 480) continue;
 
             double weight = Math.pow(decay, sorted.size() - 1 - i);
@@ -99,10 +102,7 @@ public class TaskEstimationServiceImpl implements TaskEstimationService {
             weightSum += weight;
         }
 
-        if (weightSum == 0) {
-            return Optional.empty(); // every match was corrupted/outlier — let the caller fall back
-        }
-        return Optional.of((int) Math.round(valueSum / weightSum));
+        return weightSum > 0 ? Optional.of((int) Math.round(valueSum / weightSum)) : Optional.empty();
     }
 
     private double jaccardSimilarity(String a, String b) {
@@ -127,8 +127,10 @@ public class TaskEstimationServiceImpl implements TaskEstimationService {
 
     private List<Long> actualDurations(List<Tasks> tasks) {
         return tasks.stream()
-                .map(task -> Duration.between(task.getStartedAt(), task.getCompletedAt()).toMinutes())
-                .filter(duration -> duration > 0 && duration <= 480) // cap at 8 hours — ADHD-friendly upper bound anyway
+                .map(Tasks::getTotalFocusedSeconds)
+                .filter(Objects::nonNull)
+                .map(seconds -> seconds / 60L)
+                .filter(minutes -> minutes > 0 && minutes <= 480) // still a sane upper bound, see note below
                 .sorted()
                 .toList();
     }
