@@ -1,6 +1,7 @@
 package com.khoatrbl.productivity.controllers;
 
 import com.khoatrbl.productivity.domains.dtos.CreateQuoteRequest;
+import com.khoatrbl.productivity.domains.dtos.QuoteClaimResponse;
 import com.khoatrbl.productivity.domains.dtos.QuoteDto;
 import com.khoatrbl.productivity.domains.entities.Quotes;
 import com.khoatrbl.productivity.mappers.QuoteMapper;
@@ -47,6 +48,12 @@ public class QuoteController {
         QuoteDto dto = QuoteMapper.toDto(quote, false);
 
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
+    }
+
+    @PatchMapping(path = "/claims")
+    public ResponseEntity<QuoteClaimResponse> claimDailyQuote(Authentication authentication) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+        return ResponseEntity.ok(quoteService.claimDailyQuote(currentUserId));
     }
 
     @DeleteMapping(path ="/{id}")
