@@ -26,7 +26,7 @@ public class QuoteController {
     public ResponseEntity<List<QuoteDto>> getAllQuotes() {
         List<Quotes> quoteList = quoteService.getAllQuotes();
 
-        List<QuoteDto> res = quoteList.stream().map(QuoteMapper::toDto).toList();
+        List<QuoteDto> res = quoteList.stream().map(quote -> QuoteMapper.toDto(quote, false)).toList();
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
@@ -35,9 +35,7 @@ public class QuoteController {
     public ResponseEntity<QuoteDto> getDailyQuote(Authentication authentication) {
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
 
-        Quotes quote = quoteService.getDailyQuote(currentUserId);
-
-        QuoteDto dto = QuoteMapper.toDto(quote);
+        QuoteDto dto = quoteService.getDailyQuote(currentUserId);
 
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
@@ -46,7 +44,7 @@ public class QuoteController {
     public ResponseEntity<QuoteDto> createQuote(@Valid @RequestBody CreateQuoteRequest createQuoteRequest) {
         Quotes quote = quoteService.createQuote(createQuoteRequest);
 
-        QuoteDto dto = QuoteMapper.toDto(quote);
+        QuoteDto dto = QuoteMapper.toDto(quote, false);
 
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }

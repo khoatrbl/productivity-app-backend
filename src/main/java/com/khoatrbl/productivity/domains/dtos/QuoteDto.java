@@ -19,4 +19,5 @@ public class QuoteDto {
     private String quote;
     private String author;
     private int calmExp;
+    private boolean alreadyClaimed;
 }

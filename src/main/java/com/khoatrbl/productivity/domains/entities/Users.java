@@ -3,6 +3,7 @@ package com.khoatrbl.productivity.domains.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,9 @@ public class Users {
 
     @Column(nullable = false)
     private String timezone;
+
+    @Column
+    private LocalDate lastQuoteClaimedDate; // nullable — null means never claimed
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
