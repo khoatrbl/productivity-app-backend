@@ -9,6 +9,10 @@ import java.util.UUID;
 public interface TaskService {
     List<Tasks> getAllTasksByUserId(UUID userId);
 
+    Tasks getTaskByUserIdAndTaskId(UUID userId, UUID taskId);
+
+    StartTaskExpClaimResponse claimStartExpReward(UUID userId, UUID taskId);
+
     Tasks createTask(UUID userId, CreateTaskRequest createTaskRequest);
 
     Tasks updateTaskData(UUID userId, UUID taskId, UpdateTaskRequest updateTaskRequest);

@@ -60,7 +60,7 @@ public class QuoteServiceImpl implements QuoteService {
             // Already claimed today — idempotent no-op, no matter how this got
             // triggered (relogin, retry, stale client state).
             return QuoteClaimResponse.builder()
-                    .claimed(false)
+                    .claimed(false) // nothing is claimed
                     .expGranted(0)
                     .profile(ProfileMapper.toDto(user))
                     .build();

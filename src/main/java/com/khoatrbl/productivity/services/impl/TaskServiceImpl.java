@@ -1,20 +1,22 @@
 package com.khoatrbl.productivity.services.impl;
 
-import com.khoatrbl.productivity.domains.Priority;
 import com.khoatrbl.productivity.domains.Status;
 import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.SubTasks;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.domains.entities.Users;
+import com.khoatrbl.productivity.mappers.ProfileMapper;
+import com.khoatrbl.productivity.mappers.TaskMapper;
 import com.khoatrbl.productivity.repositories.TaskRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.services.RewardCalculationService;
-import com.khoatrbl.productivity.services.TaskEstimationService;
 import com.khoatrbl.productivity.services.TaskService;
+import com.khoatrbl.productivity.services.UserService;
 import com.khoatrbl.productivity.utilities.StringUtils;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -26,7 +28,10 @@ import java.util.stream.Collectors;
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final RewardCalculationService rewardCalculationService;
+    private final UserService userService;
     private final UserRepository userRepository;
+
+    private final int START_TASK_EXP = 15;
 
     @Override
     public List<Tasks> getAllTasksByUserId(UUID userId) {
@@ -34,12 +39,43 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public Tasks getTaskByUserIdAndTaskId(UUID userId, UUID taskId) {
+        return taskRepository.findByIdAndUserId(taskId, userId)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Task not found for task id: " + taskId)
+                );
+    }
+
+    @Transactional
+    @Override
+    public StartTaskExpClaimResponse claimStartExpReward(UUID userId, UUID taskId) {
+        Tasks task = taskRepository.findByIdAndUserId(taskId, userId)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Task not found for task id: " + taskId)
+                );
+
+        task.setStartExpClaimed(true);
+
+        UpdateExpRequest updateExpRequest = UpdateExpRequest.builder()
+                .expGained(START_TASK_EXP)
+                .build();
+
+        Users user = userService.updateUserLevel(userId, updateExpRequest);
+        ProfileDto profile = ProfileMapper.toDto(user);
+
+        taskRepository.save(task);
+
+        return StartTaskExpClaimResponse.builder()
+                .claimed(true)
+                .expGranted(START_TASK_EXP)
+                .profile(profile)
+                .build();
+    }
+
+    @Override
     public Tasks createTask(UUID userId, CreateTaskRequest createTaskRequest) {
 
-        Users owner = userRepository.findById(userId)
-                .orElseThrow(
-                        () -> new EntityNotFoundException("User not found for id: " + userId)
-                );
+        Users owner = userService.getUserById(userId);
 
         Tasks newTask = Tasks.builder()
                 .user(owner)
@@ -50,6 +86,7 @@ public class TaskServiceImpl implements TaskService {
                 .priority(createTaskRequest.getPriority())
                 .status(Status.INCOMPLETE)
                 .sprintInMinutes(createTaskRequest.getSprintInMinutes())
+                .startExpClaimed(false)
                 .build();
 
         int estimateTime = rewardCalculationService.estimateTime(newTask);

@@ -45,6 +45,18 @@ public class TaskController {
         return ResponseEntity.ok(taskService.estimateReward(currentUserId, rewardEstimateRequest));
     }
 
+    @PostMapping("/{id}/claims")
+    public ResponseEntity<StartTaskExpClaimResponse> claimStartExpReward(
+            @PathVariable("id") UUID taskId,
+            Authentication authentication
+    ) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
+        StartTaskExpClaimResponse res = taskService.claimStartExpReward(currentUserId, taskId);
+
+        return ResponseEntity.ok(res);
+    }
+
     @GetMapping
     public ResponseEntity<List<TaskDto>> getAllTaskOfUser(Authentication authentication) {
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
@@ -53,6 +65,20 @@ public class TaskController {
         List<TaskDto> res = taskList.stream().map(TaskMapper::toTaskDto).toList();
 
         return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/{id}")
+    public ResponseEntity<TaskDto> getTaskById(
+            @PathVariable("id") UUID taskId,
+            Authentication authentication
+    ) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
+        Tasks task = taskService.getTaskByUserIdAndTaskId(currentUserId, taskId);
+
+        TaskDto dto = TaskMapper.toTaskDto(task);
+
+        return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
     @PutMapping(path = "/{id}")

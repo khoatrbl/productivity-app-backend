@@ -57,8 +57,11 @@ public class Tasks {
     @Column(nullable = false)
     private int coins;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private int sprintInMinutes;
+
+    @Column(nullable = false)
+    private boolean startExpClaimed;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SubTasks> subTasks = new ArrayList<>();

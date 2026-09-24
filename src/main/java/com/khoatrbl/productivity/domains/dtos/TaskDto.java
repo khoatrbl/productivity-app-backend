@@ -32,4 +32,5 @@ public class TaskDto {
     private Priority priority;
     private Status status;
     private int sprintInMinutes;
+    private boolean startExpClaimed;
 }

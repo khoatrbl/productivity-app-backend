@@ -53,6 +53,7 @@ public class QuoteController {
     @PatchMapping(path = "/claims")
     public ResponseEntity<QuoteClaimResponse> claimDailyQuote(Authentication authentication) {
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
         return ResponseEntity.ok(quoteService.claimDailyQuote(currentUserId));
     }
 
