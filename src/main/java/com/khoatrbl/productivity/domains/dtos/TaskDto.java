@@ -33,4 +33,5 @@ public class TaskDto {
     private Status status;
     private int sprintInMinutes;
     private boolean startExpClaimed;
+    private LocalDateTime createdAt;
 }

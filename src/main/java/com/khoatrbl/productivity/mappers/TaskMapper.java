@@ -24,6 +24,7 @@ public class TaskMapper {
                 .status(task.getStatus())
                 .sprintInMinutes(task.getSprintInMinutes())
                 .startExpClaimed(task.isStartExpClaimed())
+                .createdAt(task.getCreatedAt())
                 .subTasks(task.getSubTasks() != null ?
                         task.getSubTasks().stream().map(SubTaskMapper::toSubTaskDto).toList() : new ArrayList<>())
                 .build();
