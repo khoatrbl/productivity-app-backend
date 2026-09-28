@@ -1,6 +1,5 @@
 package com.khoatrbl.productivity.domains.dtos;
 
-import com.khoatrbl.productivity.domains.QuoteCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;

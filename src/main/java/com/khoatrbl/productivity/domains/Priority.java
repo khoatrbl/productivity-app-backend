@@ -1,5 +1,8 @@
 package com.khoatrbl.productivity.domains;
 
+import lombok.Getter;
+
+@Getter
 public enum Priority {
     URGENT(4),
     HIGH(3),
@@ -12,7 +15,4 @@ public enum Priority {
         this.weight = weight;
     }
 
-    public int getWeight() {
-        return weight;
-    }
 }

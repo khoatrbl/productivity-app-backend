@@ -1,6 +1,5 @@
 package com.khoatrbl.productivity.domains.dtos;
 
-import com.khoatrbl.productivity.domains.QuoteCategory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

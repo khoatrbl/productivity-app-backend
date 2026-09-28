@@ -1,6 +1,5 @@
 package com.khoatrbl.productivity.domains.entities;
 
-import com.khoatrbl.productivity.domains.QuoteCategory;
 import jakarta.persistence.*;
 import lombok.*;
 
