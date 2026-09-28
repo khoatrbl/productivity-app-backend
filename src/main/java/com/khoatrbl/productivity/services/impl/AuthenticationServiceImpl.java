@@ -140,7 +140,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .currentExp(0)
                 .currentLevel(startingLevel)
                 .coins(0)
-                .hasCompletedOnboarding(false)
                 .build();
 
         return userRepository.save(newUser);
