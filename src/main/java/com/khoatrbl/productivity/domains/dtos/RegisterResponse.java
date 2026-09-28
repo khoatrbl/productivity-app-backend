@@ -15,5 +15,6 @@ public class RegisterResponse {
     private String timezone;
     private LevelDto currentLevel;
     private int currentExp;
+    private PetDto pet;
 
 }

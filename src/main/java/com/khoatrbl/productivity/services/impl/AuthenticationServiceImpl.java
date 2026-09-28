@@ -1,16 +1,22 @@
 package com.khoatrbl.productivity.services.impl;
 
+import com.khoatrbl.productivity.domains.dtos.CreatePetRequest;
 import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
+import com.khoatrbl.productivity.domains.dtos.RegisterResponse;
 import com.khoatrbl.productivity.domains.entities.Level;
+import com.khoatrbl.productivity.domains.entities.Pets;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
 import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
 import com.khoatrbl.productivity.exceptions.PasswordsNotMatchException;
+import com.khoatrbl.productivity.mappers.LevelMapper;
+import com.khoatrbl.productivity.mappers.PetMapper;
 import com.khoatrbl.productivity.repositories.LevelRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.security.CustomUserDetails;
 import com.khoatrbl.productivity.security.CustomUserDetailsService;
 import com.khoatrbl.productivity.services.AuthenticationService;
+import com.khoatrbl.productivity.services.PetService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -24,6 +30,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
@@ -37,6 +44,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final CustomUserDetailsService customUserDetailsService;
     private final UserRepository userRepository;
     private final LevelRepository levelRepository;
+    private final PetService petService;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.secret}")
@@ -90,7 +98,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public Users registerUser(RegisterRequest registerRequest) {
+    @Transactional
+    public RegisterResponse registerUser(RegisterRequest registerRequest) {
+        Users newUser = createNewUser(registerRequest);
+        Pets defaultPet = createUserDefaultPet(newUser);
+
+        return RegisterResponse.builder()
+                .email(newUser.getEmail())
+                .displayName(newUser.getDisplayName())
+                .timezone(newUser.getTimezone())
+                .currentLevel(LevelMapper.toDto(newUser.getCurrentLevel()))
+                .currentExp(newUser.getCurrentExp())
+                .pet(PetMapper.toDto(defaultPet))
+                .build();
+    }
+
+    private Key getSigningKey() {
+        byte[] keyBytes = JWT_SECRET.getBytes();
+
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private Users createNewUser(RegisterRequest registerRequest) {
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
             throw new EmailAlreadyExistsException("Email is already used.");
         }
@@ -123,9 +152,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return userRepository.save(newUser);
     }
 
-    private Key getSigningKey() {
-        byte[] keyBytes = JWT_SECRET.getBytes();
+    private Pets createUserDefaultPet(Users newUser) {
+        String defaultName = "Buddy";
+        CreatePetRequest request = CreatePetRequest.builder()
+                .name(defaultName)
+                .build();
 
-        return Keys.hmacShaKeyFor(keyBytes);
+        return petService.createPetForUser(newUser.getId(), request);
     }
 }

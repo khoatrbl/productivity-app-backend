@@ -29,7 +29,6 @@ public class AuthController {
     public ResponseEntity<LogInResponse> login(@Valid @RequestBody LogInRequest logInRequest) {
         String token = authenticationService.login(logInRequest.getEmail(), logInRequest.getPassword());
 
-
         LogInResponse res = LogInResponse.builder()
                 .token(token)
                 .expiresIn(tokenExp.toSeconds())
@@ -40,22 +39,15 @@ public class AuthController {
 
     @PostMapping(path = "/register")
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        Users newUser = authenticationService.registerUser(registerRequest);
+        RegisterResponse registerResponse = authenticationService.registerUser(registerRequest);
 
-        RegisterResponse res = RegisterResponse.builder()
-                .email(newUser.getEmail())
-                .displayName(newUser.getDisplayName())
-                .timezone(newUser.getTimezone())
-                .currentExp(newUser.getCurrentExp())
-                .currentLevel(LevelMapper.toDto(newUser.getCurrentLevel()))
-                .build();
-
-        return new ResponseEntity<>(res, HttpStatus.CREATED);
+        return new ResponseEntity<>(registerResponse, HttpStatus.CREATED);
     }
 
     @GetMapping(path = "/validate")
     public ResponseEntity<Void> validateToken() {
-        // If execution reaches here at all, the JWT is already successfully validated by Spring Security.
+        // If execution reaches here at all,
+        // the JWT is already successfully validated by Spring Security.
 
         return ResponseEntity.ok().build();
     }

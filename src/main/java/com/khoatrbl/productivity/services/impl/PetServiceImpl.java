@@ -1,6 +1,7 @@
 package com.khoatrbl.productivity.services.impl;
 
 import com.khoatrbl.productivity.domains.dtos.CreatePetRequest;
+import com.khoatrbl.productivity.domains.dtos.UpdatePetNameRequest;
 import com.khoatrbl.productivity.domains.entities.PetLevels;
 import com.khoatrbl.productivity.domains.entities.Pets;
 import com.khoatrbl.productivity.domains.entities.Users;
@@ -50,5 +51,15 @@ public class PetServiceImpl implements PetService {
                 .orElseThrow(
                         () -> new EntityNotFoundException("Pet not found for user: " + userId)
                 );
+    }
+
+    @Override
+    public Pets updatePetNameForUser(UUID userId, UpdatePetNameRequest updatePetNameRequest) {
+        Pets pet = petsRepository.findByOwnerId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Pet not found for user: " + userId));
+
+        pet.setName(updatePetNameRequest.getName());
+
+        return petsRepository.save(pet);
     }
 }
