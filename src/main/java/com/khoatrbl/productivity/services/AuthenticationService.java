@@ -1,8 +1,6 @@
 package com.khoatrbl.productivity.services;
 
 import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
-import com.khoatrbl.productivity.domains.dtos.RegisterResponse;
-import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.security.CustomUserDetails;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -13,5 +11,5 @@ public interface AuthenticationService {
 
     UserDetails validateToken(String token);
 
-    RegisterResponse registerUser(RegisterRequest registerRequest);
+    String registerUser(RegisterRequest registerRequest);
 }

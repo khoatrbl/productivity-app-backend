@@ -3,9 +3,6 @@ package com.khoatrbl.productivity.controllers;
 import com.khoatrbl.productivity.domains.dtos.LogInRequest;
 import com.khoatrbl.productivity.domains.dtos.LogInResponse;
 import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
-import com.khoatrbl.productivity.domains.dtos.RegisterResponse;
-import com.khoatrbl.productivity.domains.entities.Users;
-import com.khoatrbl.productivity.mappers.LevelMapper;
 import com.khoatrbl.productivity.services.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +35,15 @@ public class AuthController {
     }
 
     @PostMapping(path = "/register")
-    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        RegisterResponse registerResponse = authenticationService.registerUser(registerRequest);
+    public ResponseEntity<LogInResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        String token = authenticationService.registerUser(registerRequest);
 
-        return new ResponseEntity<>(registerResponse, HttpStatus.CREATED);
+        LogInResponse res = LogInResponse.builder()
+                .token(token)
+                .expiresIn(tokenExp.toSeconds())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
     @GetMapping(path = "/validate")

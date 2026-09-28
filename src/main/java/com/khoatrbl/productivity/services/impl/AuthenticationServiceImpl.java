@@ -2,15 +2,12 @@ package com.khoatrbl.productivity.services.impl;
 
 import com.khoatrbl.productivity.domains.dtos.CreatePetRequest;
 import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
-import com.khoatrbl.productivity.domains.dtos.RegisterResponse;
 import com.khoatrbl.productivity.domains.entities.Level;
 import com.khoatrbl.productivity.domains.entities.Pets;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
 import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
 import com.khoatrbl.productivity.exceptions.PasswordsNotMatchException;
-import com.khoatrbl.productivity.mappers.LevelMapper;
-import com.khoatrbl.productivity.mappers.PetMapper;
 import com.khoatrbl.productivity.repositories.LevelRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.security.CustomUserDetails;
@@ -99,18 +96,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public RegisterResponse registerUser(RegisterRequest registerRequest) {
+    public String registerUser(RegisterRequest registerRequest) {
         Users newUser = createNewUser(registerRequest);
-        Pets defaultPet = createUserDefaultPet(newUser);
 
-        return RegisterResponse.builder()
-                .email(newUser.getEmail())
-                .displayName(newUser.getDisplayName())
-                .timezone(newUser.getTimezone())
-                .currentLevel(LevelMapper.toDto(newUser.getCurrentLevel()))
-                .currentExp(newUser.getCurrentExp())
-                .pet(PetMapper.toDto(defaultPet))
-                .build();
+        createUserDefaultPet(newUser);
+
+        CustomUserDetails newUserDetails = new CustomUserDetails(newUser);
+
+        return this.generateJwtToken(newUserDetails);
     }
 
     private Key getSigningKey() {
@@ -147,17 +140,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .currentExp(0)
                 .currentLevel(startingLevel)
                 .coins(0)
+                .hasCompletedOnboarding(false)
                 .build();
 
         return userRepository.save(newUser);
     }
 
-    private Pets createUserDefaultPet(Users newUser) {
+    private void createUserDefaultPet(Users newUser) {
         String defaultName = "Buddy";
         CreatePetRequest request = CreatePetRequest.builder()
                 .name(defaultName)
                 .build();
 
-        return petService.createPetForUser(newUser.getId(), request);
+        petService.createPetForUser(newUser.getId(), request);
     }
 }
