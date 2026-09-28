@@ -117,6 +117,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .timezone(registerRequest.getTimezone())
                 .currentExp(0)
                 .currentLevel(startingLevel)
+                .coins(0)
                 .build();
 
         return userRepository.save(newUser);
