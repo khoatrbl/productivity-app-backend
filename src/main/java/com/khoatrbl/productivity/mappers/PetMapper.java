@@ -11,6 +11,7 @@ public class PetMapper {
                 .name(pet.getName())
                 .petCurrentExp(pet.getPetCurrentExp())
                 .petLevel(PetLevelMapper.toDto(pet.getPetLevel()))
+                .petCurrentAffectionPoint(pet.getCurrentAffectionPoint())
                 .build();
     }
 }

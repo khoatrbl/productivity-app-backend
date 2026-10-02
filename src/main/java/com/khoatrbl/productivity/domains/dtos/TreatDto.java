@@ -1,25 +1,21 @@
 package com.khoatrbl.productivity.domains.dtos;
 
+import com.khoatrbl.productivity.domains.TreatTier;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PetItemDto {
+public class TreatDto {
     private UUID id;
-
-    private PetDto pet;
-
-    private ShopItemsDto item;
-
-    private LocalDateTime purchasedAt;
-
-    private boolean isEquipped;
+    private String treatName;
+    private int exp;
+    private int price;
+    private TreatTier treatTier;
 }

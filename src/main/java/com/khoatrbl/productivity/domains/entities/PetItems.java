@@ -26,6 +26,9 @@ public class PetItems {
     private ShopItems shopItem;
 
     @Column(nullable = false)
+    private boolean isEquipped;
+
+    @Column(nullable = false)
     private LocalDateTime purchasedAt;
 
     @PrePersist

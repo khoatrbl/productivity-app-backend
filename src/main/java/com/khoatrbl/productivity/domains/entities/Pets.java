@@ -32,6 +32,9 @@ public class Pets {
     @Column(nullable = false)
     private int petCurrentExp;
 
+    @Column
+    private int currentAffectionPoint;
+
     @OneToMany(mappedBy = "pet", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PetItems> items = new ArrayList<>();
 }

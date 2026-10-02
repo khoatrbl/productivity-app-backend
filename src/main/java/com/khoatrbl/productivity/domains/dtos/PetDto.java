@@ -1,6 +1,5 @@
 package com.khoatrbl.productivity.domains.dtos;
 
-import com.khoatrbl.productivity.domains.entities.PetItems;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +22,8 @@ public class PetDto {
     private String name;
 
     private int petCurrentExp;
+
+    private int petCurrentAffectionPoint;
 
     private List<PetItemDto> items;
 }

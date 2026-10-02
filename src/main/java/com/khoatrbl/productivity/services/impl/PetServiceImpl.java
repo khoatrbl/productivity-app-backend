@@ -39,6 +39,7 @@ public class PetServiceImpl implements PetService {
                 .owner(currentUser)
                 .petLevel(initialLevel)
                 .petCurrentExp(0)
+                .currentAffectionPoint(0)
                 .items(new ArrayList<>())
                 .build();
 
