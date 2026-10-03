@@ -1,8 +1,11 @@
 package com.khoatrbl.productivity.controllers;
 
 import com.khoatrbl.productivity.domains.dtos.*;
+import com.khoatrbl.productivity.domains.entities.InventoryItem;
 import com.khoatrbl.productivity.domains.entities.Users;
+import com.khoatrbl.productivity.mappers.InventoryItemMapper;
 import com.khoatrbl.productivity.mappers.LevelMapper;
+import com.khoatrbl.productivity.services.InventoryItemService;
 import com.khoatrbl.productivity.utilities.SecurityUtils;
 import com.khoatrbl.productivity.services.UserService;
 import jakarta.validation.Valid;
@@ -12,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,6 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final InventoryItemService inventoryItemService;
 
     @GetMapping
     public ResponseEntity<ProfileDto> getMyProfile(Authentication authentication) {
@@ -37,6 +42,20 @@ public class UserController {
 
         return new ResponseEntity<>(profileDto, HttpStatus.OK);
     }
+
+    @GetMapping(path = "/inventory")
+    public ResponseEntity<List<InventoryItemDto>> getUserInventory(Authentication authentication) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
+        List<InventoryItem> listOfInventoryItems = inventoryItemService.getAllItemsOfUserId(currentUserId);
+
+        List<InventoryItemDto> dto = listOfInventoryItems.stream()
+                .map(InventoryItemMapper::toDto)
+                .toList();
+
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
+
 
     @PutMapping
     public ResponseEntity<UpdateProfileResponse> updateProfile(

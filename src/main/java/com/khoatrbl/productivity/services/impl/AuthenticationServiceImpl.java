@@ -13,6 +13,7 @@ import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.security.CustomUserDetails;
 import com.khoatrbl.productivity.security.CustomUserDetailsService;
 import com.khoatrbl.productivity.services.AuthenticationService;
+import com.khoatrbl.productivity.services.InventoryItemService;
 import com.khoatrbl.productivity.services.PetService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -42,6 +43,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserRepository userRepository;
     private final LevelRepository levelRepository;
     private final PetService petService;
+    private final InventoryItemService inventoryItemService;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.secret}")
@@ -100,6 +102,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Users newUser = createNewUser(registerRequest);
 
         createUserDefaultPet(newUser);
+        createUserInventory(newUser);
 
         CustomUserDetails newUserDetails = new CustomUserDetails(newUser);
 
@@ -152,5 +155,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
 
         petService.createPetForUser(newUser.getId(), request);
+    }
+
+    private void createUserInventory(Users newUser) {
+        inventoryItemService.initializeUserInventory(newUser.getId());
     }
 }
