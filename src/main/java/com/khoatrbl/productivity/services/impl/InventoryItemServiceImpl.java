@@ -1,9 +1,11 @@
 package com.khoatrbl.productivity.services.impl;
 
 import com.khoatrbl.productivity.domains.TreatTier;
+import com.khoatrbl.productivity.domains.dtos.PurchaseRequest;
 import com.khoatrbl.productivity.domains.entities.InventoryItem;
 import com.khoatrbl.productivity.domains.entities.Treat;
 import com.khoatrbl.productivity.domains.entities.Users;
+import com.khoatrbl.productivity.exceptions.InsufficientResourceException;
 import com.khoatrbl.productivity.repositories.InventoryItemRepository;
 import com.khoatrbl.productivity.repositories.TreatRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
@@ -61,5 +63,38 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         }
 
         inventoryItemRepository.saveAll(itemsToAdd);
+    }
+
+    @Override
+    @Transactional
+    public InventoryItem purchaseTreat(UUID userId, UUID treatId, PurchaseRequest purchaseRequest) {
+        int quantity = purchaseRequest.getQuantity();
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1.");
+        }
+
+        // 1. Lock the user first. Concurrent purchases for this user wait here.
+        Users user = userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found for id: " + userId));
+
+        Treat treatToBuy = treatRepository.findById(treatId)
+                .orElseThrow(() -> new EntityNotFoundException("Treat not found for id: " + treatId));
+
+        // 2. Check the TOTAL cost against the freshly locked balance.
+        int totalCost = Math.multiplyExact(treatToBuy.getPrice(), quantity);
+        if (user.getCoins() < totalCost) {
+            throw new InsufficientResourceException("Insufficient user resource.");
+        }
+
+        // 3. Lock the inventory row too (user -> inventory, always in this order).
+        InventoryItem item = inventoryItemRepository.findByUserIdAndTreatIdForUpdate(userId, treatId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Inventory row missing for user " + userId + " and treat " + treatId));
+
+        user.setCoins(user.getCoins() - totalCost);
+        item.setQuantity(item.getQuantity() + quantity);
+
+        // Managed entities are flushed on commit; explicit save() calls aren't needed.
+        return item;
     }
 }

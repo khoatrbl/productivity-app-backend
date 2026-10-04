@@ -27,4 +27,6 @@ public class TreatServiceImpl implements TreatService {
     public List<Treat> getAllTreats() {
         return treatRepository.findAll();
     }
+
+
 }

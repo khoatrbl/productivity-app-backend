@@ -1,6 +1,7 @@
 package com.khoatrbl.productivity.services;
 
 import com.khoatrbl.productivity.domains.dtos.CreateShopItemRequest;
+import com.khoatrbl.productivity.domains.dtos.PurchaseRequest;
 import com.khoatrbl.productivity.domains.entities.ShopItems;
 
 import java.util.List;

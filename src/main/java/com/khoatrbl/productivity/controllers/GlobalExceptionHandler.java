@@ -1,10 +1,7 @@
 package com.khoatrbl.productivity.controllers;
 
 import com.khoatrbl.productivity.domains.dtos.ApiErrorResponse;
-import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
-import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
-import com.khoatrbl.productivity.exceptions.PasswordsNotMatchException;
-import com.khoatrbl.productivity.exceptions.TaskAccessDeniedException;
+import com.khoatrbl.productivity.exceptions.*;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -110,6 +107,26 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(res, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InsufficientResourceException.class)
+    public ResponseEntity<ApiErrorResponse> handleInsufficientResourceException(InsufficientResourceException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.BAD_REQUEST);
     }
 
 }
