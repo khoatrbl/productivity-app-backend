@@ -1,25 +1,18 @@
 package com.khoatrbl.productivity.domains.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PetItemDto {
-    private UUID id;
-
-    private ShopItemsDto shopItem;
-
-    private LocalDateTime purchasedAt;
-
+public class UpdatePetItemStateRequest {
+    @NotNull(message = "Equip status is required.")
     @JsonProperty("isEquipped")
     private boolean equipped;
 }

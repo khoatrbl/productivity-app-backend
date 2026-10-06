@@ -81,6 +81,20 @@ public class PetController {
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
+    @PatchMapping(path = "/items/{itemId}")
+    public ResponseEntity<PetItemDto> updatePetItemState(
+            @PathVariable("itemId") UUID itemId,
+            @Valid @RequestBody UpdatePetItemStateRequest updatePetItemStateRequest,
+            Authentication authentication) {
+
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
+        PetItems item = petItemsService.setPetItemStateForUsersPet(currentUserId, itemId, updatePetItemStateRequest);
+
+        return new ResponseEntity<>(PetItemMapper.toDto(item), HttpStatus.OK);
+
+    }
+
     @PatchMapping
     public ResponseEntity<PetDto> updatePetName(
             @Valid @RequestBody UpdatePetNameRequest updatePetNameRequest,

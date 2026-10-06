@@ -1,6 +1,8 @@
 package com.khoatrbl.productivity.services.impl;
 
+import com.khoatrbl.productivity.domains.ItemType;
 import com.khoatrbl.productivity.domains.dtos.PetItemPurchaseResponse;
+import com.khoatrbl.productivity.domains.dtos.UpdatePetItemStateRequest;
 import com.khoatrbl.productivity.domains.entities.PetItems;
 import com.khoatrbl.productivity.domains.entities.Pets;
 import com.khoatrbl.productivity.domains.entities.ShopItems;
@@ -19,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -93,6 +94,35 @@ public class PetItemsServiceImpl implements PetItemsService {
                 .coinsSpent(shopItem.getPrice())
                 .build();
 
+    }
+
+    @Override
+    @Transactional
+    public PetItems setPetItemStateForUsersPet(UUID userId, UUID petItemId, UpdatePetItemStateRequest request) {
+        Pets pet = petRepository.findByOwnerIdForUpdate(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Pet not found for user: " + userId));
+
+        PetItems itemToUpdate = petItemsRepository.findById(petItemId)
+                .filter(item -> item.getPet().getId().equals(pet.getId()))
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Pet item not found for id: " + petItemId)
+                );
+
+        boolean equip = request.isEquipped();
+
+        // Server-side rule: only one equipped item per itemType
+        if (equip) {
+            ItemType type = itemToUpdate.getShopItem().getItemType();
+
+            pet.getItems().stream()
+                    .filter(item -> item.isEquipped()
+                            && !item.getId().equals(petItemId)
+                            && item.getShopItem().getItemType() == type)
+                    .forEach(item -> item.setEquipped(false));
+        }
+
+        itemToUpdate.setEquipped(equip);
+        return itemToUpdate; // managed entity; flushed on commit
     }
 
     private boolean itemExistsForPet(Pets pet, UUID shopItemId) {

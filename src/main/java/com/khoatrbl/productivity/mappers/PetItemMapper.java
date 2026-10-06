@@ -9,7 +9,7 @@ public class PetItemMapper {
                 .id(petItems.getId())
                 .shopItem(ShopItemsMapper.toDto(petItems.getShopItem()))
                 .purchasedAt(petItems.getPurchasedAt())
-                .isEquipped(petItems.isEquipped())
+                .equipped(petItems.isEquipped())
                 .build();
     }
 }
