@@ -59,18 +59,16 @@ public class ShopItemsController {
     }
 
     @PostMapping(path = "/items/treats/{treatId}/purchases")
-    public ResponseEntity<InventoryItemDto> purchaseTreats(
+    public ResponseEntity<TreatPurchaseResponse> purchaseTreats(
             @PathVariable("treatId") UUID treatId,
             @Valid @RequestBody PurchaseRequest purchaseRequest,
             Authentication authentication) {
 
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
 
-        InventoryItem item = inventoryItemService.purchaseTreat(currentUserId, treatId, purchaseRequest);
+        TreatPurchaseResponse purchaseDto = inventoryItemService.purchaseTreat(currentUserId, treatId, purchaseRequest);
 
-        InventoryItemDto dto = InventoryItemMapper.toDto(item);
-
-        return new ResponseEntity<>(dto, HttpStatus.OK);
+        return new ResponseEntity<>(purchaseDto, HttpStatus.OK);
 
 
     }

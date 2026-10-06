@@ -122,11 +122,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InsufficientResourceException.class)
     public ResponseEntity<ApiErrorResponse> handleInsufficientResourceException(InsufficientResourceException e) {
         ApiErrorResponse res = ApiErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
+                .status(HttpStatus.UNPROCESSABLE_CONTENT.value())
                 .message(e.getMessage())
                 .build();
 
-        return new ResponseEntity<>(res, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(res, HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @ExceptionHandler(MaxLevelReachedException.class)
+    public ResponseEntity<ApiErrorResponse> handleMaxLevelReachedException(MaxLevelReachedException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.CONFLICT);
     }
 
 }
