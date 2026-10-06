@@ -1,6 +1,5 @@
 package com.khoatrbl.productivity.services;
 
-import com.khoatrbl.productivity.domains.dtos.PurchaseRequest;
 import com.khoatrbl.productivity.domains.dtos.TreatPurchaseResponse;
 import com.khoatrbl.productivity.domains.entities.InventoryItem;
 
@@ -12,5 +11,5 @@ public interface InventoryItemService {
 
     void initializeUserInventory(UUID userId);
 
-    TreatPurchaseResponse purchaseTreat(UUID userId, UUID treatId, PurchaseRequest purchaseRequest);
+    TreatPurchaseResponse purchaseTreat(UUID userId, UUID treatId);
 }

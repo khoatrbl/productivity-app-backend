@@ -1,7 +1,6 @@
 package com.khoatrbl.productivity.services.impl;
 
 import com.khoatrbl.productivity.domains.TreatTier;
-import com.khoatrbl.productivity.domains.dtos.PurchaseRequest;
 import com.khoatrbl.productivity.domains.dtos.TreatPurchaseResponse;
 import com.khoatrbl.productivity.domains.entities.InventoryItem;
 import com.khoatrbl.productivity.domains.entities.Treat;
@@ -69,8 +68,8 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     @Override
     @Transactional
-    public TreatPurchaseResponse purchaseTreat(UUID userId, UUID treatId, PurchaseRequest purchaseRequest) {
-        int quantity = purchaseRequest.getQuantity();
+    public TreatPurchaseResponse purchaseTreat(UUID userId, UUID treatId) {
+        int quantity = 1;
 
         Users user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found for id: " + userId));

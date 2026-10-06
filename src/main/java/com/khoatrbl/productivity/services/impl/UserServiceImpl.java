@@ -105,12 +105,10 @@ public class UserServiceImpl implements UserService {
 
     /**
      * Adds EXP and levels up as many times as needed.
-     * Returns the number of levels gained (0 = no level-up).
      */
-    private int applyExp(Users user, int gainedExp) {
+    private void applyExp(Users user, int gainedExp) {
         Level level = user.getCurrentLevel();
         int exp = user.getCurrentExp() + gainedExp;
-        int levelsGained = 0;
 
         while (exp >= level.getThreshold()) {
             Optional<Level> next = levelRepository.findByLevel(level.getLevel() + 1);
@@ -120,12 +118,10 @@ public class UserServiceImpl implements UserService {
             }
             exp -= level.getThreshold();
             level = next.get();
-            levelsGained++;
         }
 
         user.setCurrentLevel(level);
         user.setCurrentExp(exp);
-        return levelsGained;
     }
 
     @Override

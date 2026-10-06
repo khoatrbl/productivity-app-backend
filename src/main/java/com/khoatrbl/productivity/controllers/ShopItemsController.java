@@ -1,9 +1,7 @@
 package com.khoatrbl.productivity.controllers;
 
 import com.khoatrbl.productivity.domains.dtos.*;
-import com.khoatrbl.productivity.domains.entities.InventoryItem;
 import com.khoatrbl.productivity.domains.entities.ShopItems;
-import com.khoatrbl.productivity.mappers.InventoryItemMapper;
 import com.khoatrbl.productivity.mappers.ShopItemsMapper;
 import com.khoatrbl.productivity.mappers.TreatMapper;
 import com.khoatrbl.productivity.services.InventoryItemService;
@@ -61,12 +59,11 @@ public class ShopItemsController {
     @PostMapping(path = "/items/treats/{treatId}/purchases")
     public ResponseEntity<TreatPurchaseResponse> purchaseTreats(
             @PathVariable("treatId") UUID treatId,
-            @Valid @RequestBody PurchaseRequest purchaseRequest,
             Authentication authentication) {
 
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
 
-        TreatPurchaseResponse purchaseDto = inventoryItemService.purchaseTreat(currentUserId, treatId, purchaseRequest);
+        TreatPurchaseResponse purchaseDto = inventoryItemService.purchaseTreat(currentUserId, treatId);
 
         return new ResponseEntity<>(purchaseDto, HttpStatus.OK);
 

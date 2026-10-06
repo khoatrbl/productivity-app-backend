@@ -1,14 +1,10 @@
 package com.khoatrbl.productivity.services.impl;
 
 import com.khoatrbl.productivity.domains.dtos.CreateShopItemRequest;
-import com.khoatrbl.productivity.domains.dtos.PurchaseRequest;
 import com.khoatrbl.productivity.domains.entities.Level;
 import com.khoatrbl.productivity.domains.entities.ShopItems;
-import com.khoatrbl.productivity.domains.entities.Treat;
-import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.repositories.LevelRepository;
 import com.khoatrbl.productivity.repositories.ShopItemsRepository;
-import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.services.ShopItemsService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
