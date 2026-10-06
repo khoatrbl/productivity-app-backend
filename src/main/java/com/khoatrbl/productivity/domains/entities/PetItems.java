@@ -12,6 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"pet_id", "shop_item_id"}))
 public class PetItems {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

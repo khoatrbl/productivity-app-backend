@@ -1,12 +1,12 @@
 package com.khoatrbl.productivity.services.impl;
 
-import com.khoatrbl.productivity.domains.dtos.PetItemDto;
 import com.khoatrbl.productivity.domains.dtos.PetItemPurchaseResponse;
 import com.khoatrbl.productivity.domains.entities.PetItems;
 import com.khoatrbl.productivity.domains.entities.Pets;
 import com.khoatrbl.productivity.domains.entities.ShopItems;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.exceptions.InsufficientResourceException;
+import com.khoatrbl.productivity.exceptions.LevelRequirementNotMetException;
 import com.khoatrbl.productivity.exceptions.PetItemAlreadyExistsForPetException;
 import com.khoatrbl.productivity.mappers.PetItemMapper;
 import com.khoatrbl.productivity.repositories.PetItemsRepository;
@@ -68,6 +68,10 @@ public class PetItemsServiceImpl implements PetItemsService {
                         () -> new EntityNotFoundException("Shop item not found for id: " + shopItemId)
                 );
 
+        if (user.getCurrentLevel().getLevel() < shopItem.getRequiredUserLevel().getLevel()) {
+            throw new LevelRequirementNotMetException("Requires level " + shopItem.getRequiredUserLevel());
+        }
+
         if (user.getCoins() < shopItem.getPrice()) {
             throw new InsufficientResourceException("Insufficient user resource.");
         }
@@ -78,10 +82,10 @@ public class PetItemsServiceImpl implements PetItemsService {
                 .pet(pet)
                 .shopItem(shopItem)
                 .isEquipped(false)
-                .purchasedAt(LocalDateTime.now())
                 .build();
 
         petItemsRepository.save(petItem);
+        pet.getItems().add(petItem);
 
         return PetItemPurchaseResponse.builder()
                 .petItem(PetItemMapper.toDto(petItem))

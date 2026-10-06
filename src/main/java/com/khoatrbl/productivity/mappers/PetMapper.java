@@ -14,6 +14,9 @@ public class PetMapper {
                 .petCurrentAffectionPoint(pet.getCurrentAffectionPoint())
                 .pettingsLeft(pet.getPettingsLeft())
                 .petCooldownUntil(pet.getPetCooldownUntil())
+                .items(pet.getItems().stream()
+                        .map(PetItemMapper::toDto)
+                        .toList())
                 .build();
     }
 }

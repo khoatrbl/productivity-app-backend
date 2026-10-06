@@ -169,4 +169,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(res, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(LevelRequirementNotMetException.class)
+    public ResponseEntity<ApiErrorResponse> handleLevelRequirementNotMetException(LevelRequirementNotMetException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.FORBIDDEN.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.FORBIDDEN);
+    }
+
 }

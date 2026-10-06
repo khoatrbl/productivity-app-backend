@@ -1,5 +1,6 @@
 package com.khoatrbl.productivity.domains.dtos;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,11 +16,10 @@ import java.util.UUID;
 public class PetItemDto {
     private UUID id;
 
-    private PetDto pet;
-
     private ShopItemsDto shopItem;
 
     private LocalDateTime purchasedAt;
 
+    @JsonProperty("isEquipped")
     private boolean isEquipped;
 }
