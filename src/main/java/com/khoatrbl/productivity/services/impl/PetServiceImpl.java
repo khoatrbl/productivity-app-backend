@@ -1,14 +1,14 @@
 package com.khoatrbl.productivity.services.impl;
 
-import com.khoatrbl.productivity.domains.dtos.CreatePetRequest;
-import com.khoatrbl.productivity.domains.dtos.PetFeedRequest;
-import com.khoatrbl.productivity.domains.dtos.PetFeedResponse;
-import com.khoatrbl.productivity.domains.dtos.UpdatePetNameRequest;
+import com.khoatrbl.productivity.domains.FortuneType;
+import com.khoatrbl.productivity.domains.TreatTier;
+import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.*;
 import com.khoatrbl.productivity.exceptions.InsufficientResourceException;
 import com.khoatrbl.productivity.exceptions.MaxLevelReachedException;
 import com.khoatrbl.productivity.mappers.InventoryItemMapper;
 import com.khoatrbl.productivity.mappers.PetMapper;
+import com.khoatrbl.productivity.mappers.TreatMapper;
 import com.khoatrbl.productivity.repositories.*;
 import com.khoatrbl.productivity.services.PetService;
 import com.khoatrbl.productivity.services.UserService;
@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,10 @@ public class PetServiceImpl implements PetService {
     private final UserRepository userRepository;
     private final TreatRepository treatRepository;
     private final InventoryItemRepository inventoryItemRepository;
+
+    private static final int FORTUNE_MIN_COINS = 2;
+    private static final int FORTUNE_MAX_COINS = 7;
+    private static final int FORTUNE_TREAT_AMOUNT = 2;
 
 
     @Override
@@ -76,7 +81,7 @@ public class PetServiceImpl implements PetService {
         UUID treatId = request.getTreatId();
 
         // Lock order: user -> inventory -> pet (same order as purchaseTreat)
-        userRepository.findByIdForUpdate(userId)
+        Users user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found for id: " + userId));
 
         InventoryItem inventoryItem = inventoryItemRepository.findByUserIdAndTreatIdForUpdate(userId, treatId)
@@ -99,11 +104,44 @@ public class PetServiceImpl implements PetService {
         inventoryItem.setQuantity(inventoryItem.getQuantity() - 1);
         int levelsGained = applyExp(pet, gainedExp);
 
+        PetFortuneDto fortune = null;
+        InventoryItem fortuneItem = null;
+
+        if (levelsGained > 0) {
+            if (ThreadLocalRandom.current().nextBoolean()) {
+                // A pack of coins
+                int coins = ThreadLocalRandom.current().nextInt(FORTUNE_MIN_COINS, FORTUNE_MAX_COINS + 1);
+                user.setCoins(user.getCoins() + coins);
+                fortune = PetFortuneDto.builder()
+                        .type(FortuneType.COINS)
+                        .amount(coins)
+                        .build();
+            } else {
+                // Two BASIC treats
+                Treat basic = treatRepository.findByTreatTier(TreatTier.BASIC);
+
+                fortuneItem = inventoryItemRepository.findByUserIdAndTreatIdForUpdate(userId, basic.getId())
+                        .orElseThrow(
+                                () -> new EntityNotFoundException("BASIC treat row missing for user: " + userId)
+                        );
+
+                fortuneItem.setQuantity(fortuneItem.getQuantity() + FORTUNE_TREAT_AMOUNT);
+                fortune = PetFortuneDto.builder()
+                        .type(FortuneType.TREATS)
+                        .amount(FORTUNE_TREAT_AMOUNT)
+                        .treat(TreatMapper.toDto(basic))
+                        .build();
+            }
+        }
+
         return PetFeedResponse.builder()
                 .pet(PetMapper.toDto(pet))
                 .inventoryItem(InventoryItemMapper.toDto(inventoryItem))
                 .expGained(gainedExp)
                 .levelsGained(levelsGained)
+                .coins(user.getCoins())
+                .fortune(fortune)
+                .fortuneInventoryItem(fortuneItem != null ? InventoryItemMapper.toDto(fortuneItem) : null)
                 .build();
     }
 
