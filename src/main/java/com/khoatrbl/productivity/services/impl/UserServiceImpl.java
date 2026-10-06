@@ -12,6 +12,7 @@ import com.khoatrbl.productivity.repositories.LevelRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
 import com.khoatrbl.productivity.services.UserService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Users updateUserProfile(UUID id, UpdateProfileRequest updateProfileRequest) {
-        Users existingUser = userRepository.findById(id)
+        Users existingUser = userRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found for id: " + id));
 
         if (userRepository.existsByEmailAndIdNot(updateProfileRequest.getEmail(), id)) {
@@ -62,7 +63,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateUserPassword(UUID id, UpdatePasswordRequest updatePasswordRequest) {
-        Users currentUser = userRepository.findById(id)
+        Users currentUser = userRepository.findByIdForUpdate(id)
                 .orElseThrow(
                         () -> new EntityNotFoundException("User not found for id: " + id)
                 );
@@ -87,45 +88,49 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Users updateUserLevel(UUID id, UpdateExpRequest updateExpRequest) {
-        Users currentUser = userRepository.findById(id)
-                .orElseThrow(
-                        () -> new EntityNotFoundException("User not found for id: " + id)
-                );
-
-        Level currentUserLevel = currentUser.getCurrentLevel();
-        int currentExp = currentUser.getCurrentExp();
         int gain = updateExpRequest.getExpGained();
-        int maxXpOfLevel = levelRepository.findByLevel(currentUserLevel.getLevel())
-                .orElseThrow(
-                        () -> new EntityNotFoundException("Level not found for level: " + currentUserLevel.getLevel())
-                ).getThreshold();
-
-        int remainExp = 0;
-
-        // If EXP gain + current EXP exceeds threshold for current level
-        if ((maxXpOfLevel - currentExp) <= gain) {
-            remainExp = gain - (maxXpOfLevel - currentExp);
-
-            int nextLevelValue = currentUserLevel.getLevel() + 1;
-
-            Level nextLevel = levelRepository.findByLevel(nextLevelValue)
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("Level not found for level: " + nextLevelValue)
-                    );
-
-            currentUser.setCurrentLevel(nextLevel);
-            currentUser.setCurrentExp(remainExp);
-        } else {
-            currentUser.setCurrentExp(currentExp + gain);
+        if (gain <= 0) {
+            throw new IllegalArgumentException("EXP gained must be positive.");
         }
 
-        return userRepository.save(currentUser);
+        // Lock the row: task completion, quote reward and start-XP can land at the same time
+        Users currentUser = userRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found for id: " + id));
+
+        applyExp(currentUser, gain);
+        return currentUser; // managed entity; flushed on commit
+    }
+
+    /**
+     * Adds EXP and levels up as many times as needed.
+     * Returns the number of levels gained (0 = no level-up).
+     */
+    private int applyExp(Users user, int gainedExp) {
+        Level level = user.getCurrentLevel();
+        int exp = user.getCurrentExp() + gainedExp;
+        int levelsGained = 0;
+
+        while (exp >= level.getThreshold()) {
+            Optional<Level> next = levelRepository.findByLevel(level.getLevel() + 1);
+            if (next.isEmpty()) {
+                exp = level.getThreshold(); // max level: cap the bar at full
+                break;
+            }
+            exp -= level.getThreshold();
+            level = next.get();
+            levelsGained++;
+        }
+
+        user.setCurrentLevel(level);
+        user.setCurrentExp(exp);
+        return levelsGained;
     }
 
     @Override
     public Users updateUserCoins(UUID id, UpdateCoinsRequest updateCoinsRequest) {
-        Users user = userRepository.findById(id)
+        Users user = userRepository.findByIdForUpdate(id)
                 .orElseThrow(
                         () -> new EntityNotFoundException("User not found for id: " + id)
                 );
