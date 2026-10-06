@@ -16,4 +16,6 @@ public interface PetService {
     Pets updatePetNameForUser(UUID userId, UpdatePetNameRequest updatePetNameRequest);
 
     PetFeedResponse feedPetForUser(UUID userId, PetFeedRequest request);
+
+    Pets petPetForUser(UUID userId);
 }

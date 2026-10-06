@@ -139,4 +139,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(res, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(PetNappingException.class)
+    public ResponseEntity<ApiErrorResponse> handlePetNappingException(PetNappingException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.TOO_MANY_REQUESTS.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    @ExceptionHandler(MaxAffectionReachedException.class)
+    public ResponseEntity<ApiErrorResponse> handleMaxAffectionReachedException(MaxAffectionReachedException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.CONFLICT);
+    }
+
 }

@@ -3,6 +3,7 @@ package com.khoatrbl.productivity.domains.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +35,12 @@ public class Pets {
 
     @Column
     private int currentAffectionPoint;
+
+    @Column(nullable = false)
+    private int pettingsLeft = 5;
+
+    @Column
+    private Instant petCooldownUntil; // null = not napping
 
     @OneToMany(mappedBy = "pet", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PetItems> items = new ArrayList<>();

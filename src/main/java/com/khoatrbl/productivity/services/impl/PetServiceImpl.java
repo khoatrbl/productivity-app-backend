@@ -5,7 +5,9 @@ import com.khoatrbl.productivity.domains.TreatTier;
 import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.*;
 import com.khoatrbl.productivity.exceptions.InsufficientResourceException;
+import com.khoatrbl.productivity.exceptions.MaxAffectionReachedException;
 import com.khoatrbl.productivity.exceptions.MaxLevelReachedException;
+import com.khoatrbl.productivity.exceptions.PetNappingException;
 import com.khoatrbl.productivity.mappers.InventoryItemMapper;
 import com.khoatrbl.productivity.mappers.PetMapper;
 import com.khoatrbl.productivity.mappers.TreatMapper;
@@ -17,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +40,12 @@ public class PetServiceImpl implements PetService {
     private static final int FORTUNE_MAX_COINS = 7;
     private static final int FORTUNE_TREAT_AMOUNT = 2;
 
+    private static final int PETTINGS_PER_WINDOW = 5;
+    private static final Duration PET_COOLDOWN = Duration.ofMinutes(30);
+    private static final int MAX_AFFECTION = 100;
+    private static final int MIN_AFFECTION_GAIN = 3;
+    private static final int MAX_AFFECTION_GAIN = 7;
+
 
     @Override
     public Pets createPetForUser(UUID userId, CreatePetRequest createPetRequest) {
@@ -51,6 +61,7 @@ public class PetServiceImpl implements PetService {
                 .petLevel(initialLevel)
                 .petCurrentExp(0)
                 .currentAffectionPoint(0)
+                .pettingsLeft(5)
                 .items(new ArrayList<>())
                 .build();
 
@@ -143,6 +154,39 @@ public class PetServiceImpl implements PetService {
                 .fortune(fortune)
                 .fortuneInventoryItem(fortuneItem != null ? InventoryItemMapper.toDto(fortuneItem) : null)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public Pets petPetForUser(UUID userId) {
+        Pets pet = petsRepository.findByOwnerIdForUpdate(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Pet not found for user: " + userId));
+
+        Instant now = Instant.now();
+
+        // Nap is over: refill pets
+        if (pet.getPetCooldownUntil() != null && !now.isBefore(pet.getPetCooldownUntil())) {
+            pet.setPetCooldownUntil(null);
+            pet.setPettingsLeft(PETTINGS_PER_WINDOW);
+        }
+
+        if (pet.getPetCooldownUntil() != null) {
+            throw new PetNappingException("Your pet is napping.");          // -> 429
+        }
+        if (pet.getCurrentAffectionPoint() >= MAX_AFFECTION) {
+            throw new MaxAffectionReachedException("Affection is full.");   // -> 409
+        }
+
+        int gain = ThreadLocalRandom.current().nextInt(MIN_AFFECTION_GAIN, MAX_AFFECTION_GAIN + 1);
+        pet.setCurrentAffectionPoint(Math.min(MAX_AFFECTION, pet.getCurrentAffectionPoint() + gain));
+
+        int left = pet.getPettingsLeft() - 1;
+        pet.setPettingsLeft(left);
+        if (left <= 0) {
+            pet.setPetCooldownUntil(now.plus(PET_COOLDOWN));
+        }
+
+        return pet; // controller maps with PetMapper.toDto
     }
 
     /** Adds XP and levels up as many times as needed. Returns how many levels were gained. */

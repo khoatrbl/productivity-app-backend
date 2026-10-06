@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +25,10 @@ public class PetDto {
     private int petCurrentExp;
 
     private int petCurrentAffectionPoint;
+
+    private int pettingsLeft;
+
+    private Instant petCooldownUntil;
 
     private List<PetItemDto> items;
 }

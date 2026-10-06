@@ -46,6 +46,15 @@ public class PetController {
         return new ResponseEntity<>(petFeedResponse, HttpStatus.OK);
     }
 
+    @PostMapping(path = "/pettings")
+    public ResponseEntity<PetDto> petPetForUser(Authentication authentication) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
+        Pets pet = petService.petPetForUser(currentUserId);
+
+        return new ResponseEntity<>(PetMapper.toDto(pet), HttpStatus.OK);
+    }
+
     @GetMapping
     public ResponseEntity<PetDto> getUsersPet(Authentication authentication) {
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
