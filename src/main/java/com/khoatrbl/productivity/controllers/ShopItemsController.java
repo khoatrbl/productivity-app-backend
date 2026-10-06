@@ -5,6 +5,7 @@ import com.khoatrbl.productivity.domains.entities.ShopItems;
 import com.khoatrbl.productivity.mappers.ShopItemsMapper;
 import com.khoatrbl.productivity.mappers.TreatMapper;
 import com.khoatrbl.productivity.services.InventoryItemService;
+import com.khoatrbl.productivity.services.PetItemsService;
 import com.khoatrbl.productivity.services.ShopItemsService;
 import com.khoatrbl.productivity.services.TreatService;
 import com.khoatrbl.productivity.utilities.SecurityUtils;
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class ShopItemsController {
     private final ShopItemsService shopItemsService;
     private final InventoryItemService inventoryItemService;
+    private final PetItemsService petItemsService;
     private final TreatService treatService;
 
     @PostMapping(path = "/items")
@@ -66,7 +68,18 @@ public class ShopItemsController {
         TreatPurchaseResponse purchaseDto = inventoryItemService.purchaseTreat(currentUserId, treatId);
 
         return new ResponseEntity<>(purchaseDto, HttpStatus.OK);
+    }
 
+    @PostMapping(path = "/items/{itemId}/purchases")
+    public ResponseEntity<PetItemPurchaseResponse> purchaseShopItem(
+            @PathVariable("itemId") UUID shopItemId,
+            Authentication authentication) {
+
+        UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
+
+        PetItemPurchaseResponse res = petItemsService.purchasePetItem(currentUserId, shopItemId);
+
+        return new ResponseEntity<>(res, HttpStatus.OK);
 
     }
 }

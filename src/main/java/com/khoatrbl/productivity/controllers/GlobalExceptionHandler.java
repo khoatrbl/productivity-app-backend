@@ -159,4 +159,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(res, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(PetItemAlreadyExistsForPetException.class)
+    public ResponseEntity<ApiErrorResponse> handlePetItemAlreadyExistsForPet(PetItemAlreadyExistsForPetException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.CONFLICT);
+    }
+
 }

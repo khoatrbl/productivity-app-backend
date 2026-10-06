@@ -17,7 +17,7 @@ public class PetItemDto {
 
     private PetDto pet;
 
-    private ShopItemsDto item;
+    private ShopItemsDto shopItem;
 
     private LocalDateTime purchasedAt;
 
