@@ -19,5 +19,5 @@ public interface PetService {
 
     Pets petPetForUser(UUID userId);
 
-    Pets grantBonusPets(UUID userId, int amount);
+    int grantBonusPets(UUID userId, int amount);
 }

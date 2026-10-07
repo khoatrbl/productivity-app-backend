@@ -28,10 +28,12 @@ public class TaskDto {
     private int totalCoins;
     private List<SubTaskDto> subTasks;
     private LocalDateTime startedAt;
-    private LocalDateTime completeAt;
+    private LocalDateTime completedAt;
     private Priority priority;
     private Status status;
     private int sprintInMinutes;
     private boolean startExpClaimed;
+    private boolean completionRewardClaimed;
+    private int bonusPetsGranted;
     private LocalDateTime createdAt;
 }

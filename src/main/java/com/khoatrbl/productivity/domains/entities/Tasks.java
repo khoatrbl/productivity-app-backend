@@ -63,6 +63,10 @@ public class Tasks {
     @Column(nullable = false)
     private boolean startExpClaimed;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean completionRewardClaimed = false;
+
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SubTasks> subTasks = new ArrayList<>();
 

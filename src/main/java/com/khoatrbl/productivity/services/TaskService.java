@@ -17,7 +17,7 @@ public interface TaskService {
 
     Tasks updateTaskData(UUID userId, UUID taskId, UpdateTaskRequest updateTaskRequest);
 
-    Tasks updateTaskStatus(UUID userId, UUID taskId, UpdateTaskStatusRequest updateTaskStatusRequest);
+    TaskDto updateTaskStatus(UUID userId, UUID taskId, UpdateTaskStatusRequest updateTaskStatusRequest);
 
     void deleteTask(UUID userId, UUID taskId);
 

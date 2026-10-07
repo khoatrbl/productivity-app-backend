@@ -204,16 +204,24 @@ public class PetServiceImpl implements PetService {
         return pet;
     }
 
-    /** Called when a task is completed. */
+    /**
+     * Called when a task is completed.
+     */
     @Override
     @Transactional
-    public Pets grantBonusPets(UUID userId, int amount) {
-        Pets pet = petsRepository.findByOwnerIdForUpdate(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Pet not found for user: " + userId));
+    public int grantBonusPets(UUID userId, int amount) {
+        Optional<Pets> maybePet = petsRepository.findByOwnerIdForUpdate(userId);
 
-        pet.setBonusPets(Math.min(MAX_BONUS_PETS, pet.getBonusPets() + amount));
+        if (maybePet.isEmpty()) {
+            return 0; // 0 bonus pets is granted because pet does not exist.
+        }
+
+        Pets pet = maybePet.get();
+
+        int before = pet.getBonusPets();
+        pet.setBonusPets(Math.min(MAX_BONUS_PETS, before + amount));
         pet.setUpcomingAffectionGains(topUp(new ArrayList<>(pet.getUpcomingAffectionGains()), pet));
-        return pet;
+        return pet.getBonusPets() - before;
     }
 
     /** Refill the pet count if the nap is over */

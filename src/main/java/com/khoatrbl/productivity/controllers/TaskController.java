@@ -103,11 +103,9 @@ public class TaskController {
             Authentication authentication) {
 
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);
-        Tasks updatedTask = taskService.updateTaskStatus(currentUserId, taskId, updateTaskStatusRequest);
+        TaskDto updatedTask = taskService.updateTaskStatus(currentUserId, taskId, updateTaskStatusRequest);
 
-        TaskDto dto = TaskMapper.toTaskDto(updatedTask);
-
-        return new ResponseEntity<>(dto, HttpStatus.OK);
+        return new ResponseEntity<>(updatedTask, HttpStatus.OK);
     }
 
     @DeleteMapping(path = "/{id}")

@@ -9,6 +9,7 @@ import com.khoatrbl.productivity.mappers.ProfileMapper;
 import com.khoatrbl.productivity.mappers.TaskMapper;
 import com.khoatrbl.productivity.repositories.TaskRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
+import com.khoatrbl.productivity.services.PetService;
 import com.khoatrbl.productivity.services.RewardCalculationService;
 import com.khoatrbl.productivity.services.TaskService;
 import com.khoatrbl.productivity.services.UserService;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,9 +31,13 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final RewardCalculationService rewardCalculationService;
     private final UserService userService;
+    private final PetService petService;
     private final UserRepository userRepository;
 
     private final int START_TASK_EXP = 15;
+    private static final double BONUS_PET_CHANCE = 0.4; // 40% chance
+    private static final int MIN_BONUS_PETS = 1;
+    private static final int MAX_BONUS_PETS_PER_TASK = 2;
 
     @Override
     public List<Tasks> getAllTasksByUserId(UUID userId) {
@@ -87,6 +93,7 @@ public class TaskServiceImpl implements TaskService {
                 .status(Status.INCOMPLETE)
                 .sprintInMinutes(createTaskRequest.getSprintInMinutes())
                 .startExpClaimed(false)
+                .completionRewardClaimed(false)
                 .build();
 
         int estimateTime = rewardCalculationService.estimateTime(newTask);
@@ -131,8 +138,9 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Tasks updateTaskStatus(UUID userId, UUID taskId, UpdateTaskStatusRequest updateTaskStatusRequest) {
-        Tasks taskToUpdate = taskRepository.findByIdAndUserId(taskId, userId)
+    @Transactional
+    public TaskDto updateTaskStatus(UUID userId, UUID taskId, UpdateTaskStatusRequest updateTaskStatusRequest) {
+        Tasks taskToUpdate = taskRepository.findByIdAndUserIdForUpdate(taskId, userId)
                         .orElseThrow(
                                 () -> new EntityNotFoundException("Task not found for id: " + taskId)
                         );
@@ -159,12 +167,26 @@ public class TaskServiceImpl implements TaskService {
             taskToUpdate.setCurrentSessionStartedAt(null);
         }
 
-        if (newStatus == Status.COMPLETE) {
+        int bonusPetsGranted = 0;
+
+        if (newStatus == Status.COMPLETE
+                && oldStatus != Status.COMPLETE
+                && !taskToUpdate.isCompletionRewardClaimed()) {
+
             taskToUpdate.setCompletedAt(now);
+            taskToUpdate.setCompletionRewardClaimed(true);
+
+            if (ThreadLocalRandom.current().nextDouble() < BONUS_PET_CHANCE) {
+                int rolled = ThreadLocalRandom.current().nextInt(MIN_BONUS_PETS, MAX_BONUS_PETS_PER_TASK + 1);
+                bonusPetsGranted = petService.grantBonusPets(userId, rolled);
+            }
         }
 
         taskToUpdate.setStatus(newStatus);
-        return taskRepository.save(taskToUpdate);
+        TaskDto dto = TaskMapper.toTaskDto(taskToUpdate);
+
+        dto.setBonusPetsGranted(bonusPetsGranted);
+        return dto;
     }
 
     @Override
