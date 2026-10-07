@@ -125,6 +125,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Users updateUserCoins(UUID id, UpdateCoinsRequest updateCoinsRequest) {
         Users user = userRepository.findByIdForUpdate(id)
                 .orElseThrow(
