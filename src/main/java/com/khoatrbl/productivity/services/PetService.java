@@ -18,4 +18,6 @@ public interface PetService {
     PetFeedResponse feedPetForUser(UUID userId, PetFeedRequest request);
 
     Pets petPetForUser(UUID userId);
+
+    Pets grantBonusPets(UUID userId, int amount);
 }

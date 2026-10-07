@@ -1,5 +1,6 @@
 package com.khoatrbl.productivity.domains.entities;
 
+import com.khoatrbl.productivity.converters.IntListConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,8 +37,17 @@ public class Pets {
     @Column
     private int currentAffectionPoint;
 
+    @Convert(converter = IntListConverter.class)
+    @Column(nullable = false)
+    @Builder.Default
+    private List<Integer> upcomingAffectionGains = new ArrayList<>();
+
     @Column(nullable = false)
     private int pettingsLeft = 5;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int bonusPets = 0;
 
     @Column
     private Instant petCooldownUntil; // null = not napping

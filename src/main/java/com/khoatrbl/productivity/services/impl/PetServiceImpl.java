@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -41,6 +42,7 @@ public class PetServiceImpl implements PetService {
     private static final int FORTUNE_TREAT_AMOUNT = 2;
 
     private static final int PETTINGS_PER_WINDOW = 5;
+    private static final int MAX_BONUS_PETS = 10;
     private static final Duration PET_COOLDOWN = Duration.ofMinutes(30);
     private static final int MAX_AFFECTION = 100;
     private static final int MIN_AFFECTION_GAIN = 3;
@@ -64,6 +66,8 @@ public class PetServiceImpl implements PetService {
                 .pettingsLeft(5)
                 .items(new ArrayList<>())
                 .build();
+
+        pet.setUpcomingAffectionGains(topUp(List.of(), pet));
 
         return petsRepository.save(pet);
     }
@@ -164,29 +168,76 @@ public class PetServiceImpl implements PetService {
 
         Instant now = Instant.now();
 
-        // Nap is over: refill pets
+        refillWindowIfNapOver(pet, now);
+
+        boolean hasWindowPet = pet.getPetCooldownUntil() == null && pet.getPettingsLeft() > 0;
+        boolean hasBonusPet = pet.getBonusPets() > 0;
+
+        if (!hasWindowPet && !hasBonusPet) {
+            throw new PetNappingException("Your pet is napping.");          // 429
+        }
+        if (pet.getCurrentAffectionPoint() >= MAX_AFFECTION) {
+            throw new MaxAffectionReachedException("Affection is full.");   // 409
+        }
+
+        // Take one value from the stream
+        List<Integer> stream = new ArrayList<>(pet.getUpcomingAffectionGains());
+
+        // Safety net for old users
+        if (stream.isEmpty()) {
+            stream.add(rollGain());
+        }
+
+        int gain = stream.removeFirst();
+        pet.setCurrentAffectionPoint(Math.min(MAX_AFFECTION, pet.getCurrentAffectionPoint() + gain));
+
+        // Take one pet from a source: window first, then bonus
+        if (hasWindowPet) {
+            int left = pet.getPettingsLeft() - 1;
+            pet.setPettingsLeft(left);
+            if (left <= 0) pet.setPetCooldownUntil(now.plus(PET_COOLDOWN));
+        } else {
+            pet.setBonusPets(pet.getBonusPets() - 1);
+        }
+
+        pet.setUpcomingAffectionGains(topUp(stream, pet));
+        return pet;
+    }
+
+    /** Called when a task is completed. */
+    @Override
+    @Transactional
+    public Pets grantBonusPets(UUID userId, int amount) {
+        Pets pet = petsRepository.findByOwnerIdForUpdate(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Pet not found for user: " + userId));
+
+        pet.setBonusPets(Math.min(MAX_BONUS_PETS, pet.getBonusPets() + amount));
+        pet.setUpcomingAffectionGains(topUp(new ArrayList<>(pet.getUpcomingAffectionGains()), pet));
+        return pet;
+    }
+
+    /** Refill the pet count if the nap is over */
+    private void refillWindowIfNapOver(Pets pet, Instant now) {
         if (pet.getPetCooldownUntil() != null && !now.isBefore(pet.getPetCooldownUntil())) {
             pet.setPetCooldownUntil(null);
             pet.setPettingsLeft(PETTINGS_PER_WINDOW);
         }
+    }
 
-        if (pet.getPetCooldownUntil() != null) {
-            throw new PetNappingException("Your pet is napping.");          // -> 429
-        }
-        if (pet.getCurrentAffectionPoint() >= MAX_AFFECTION) {
-            throw new MaxAffectionReachedException("Affection is full.");   // -> 409
-        }
+    /** Keep enough values for every usable pet plus the next full window. */
+    private List<Integer> topUp(List<Integer> stream, Pets pet) {
+        int windowNow = pet.getPetCooldownUntil() == null ? pet.getPettingsLeft() : 0;
+        int needed = windowNow + pet.getBonusPets() + PETTINGS_PER_WINDOW;
 
-        int gain = ThreadLocalRandom.current().nextInt(MIN_AFFECTION_GAIN, MAX_AFFECTION_GAIN + 1);
-        pet.setCurrentAffectionPoint(Math.min(MAX_AFFECTION, pet.getCurrentAffectionPoint() + gain));
-
-        int left = pet.getPettingsLeft() - 1;
-        pet.setPettingsLeft(left);
-        if (left <= 0) {
-            pet.setPetCooldownUntil(now.plus(PET_COOLDOWN));
+        while (stream.size() < needed) {
+            stream.add(rollGain());
         }
 
-        return pet; // controller maps with PetMapper.toDto
+        return stream;
+    }
+
+    private int rollGain() {
+        return ThreadLocalRandom.current().nextInt(MIN_AFFECTION_GAIN, MAX_AFFECTION_GAIN + 1);
     }
 
     /** Adds XP and levels up as many times as needed. Returns how many levels were gained. */

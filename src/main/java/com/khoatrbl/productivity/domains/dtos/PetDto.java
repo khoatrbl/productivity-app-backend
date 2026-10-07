@@ -26,7 +26,11 @@ public class PetDto {
 
     private int petCurrentAffectionPoint;
 
+    private List<Integer> upcomingAffectionGains;
+
     private int pettingsLeft;
+
+    private int bonusPets;
 
     private Instant petCooldownUntil;
 
