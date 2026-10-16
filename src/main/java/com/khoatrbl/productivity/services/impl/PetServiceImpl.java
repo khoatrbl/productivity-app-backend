@@ -43,7 +43,7 @@ public class PetServiceImpl implements PetService {
 
     private static final int PETTINGS_PER_WINDOW = 5;
     private static final int MAX_BONUS_PETS = 10;
-    private static final Duration PET_COOLDOWN = Duration.ofMinutes(30);
+    private static final Duration PET_COOLDOWN = Duration.ofMinutes(60);
     private static final int MAX_AFFECTION = 100;
     private static final int MIN_AFFECTION_GAIN = 3;
     private static final int MAX_AFFECTION_GAIN = 7;

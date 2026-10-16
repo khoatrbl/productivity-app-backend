@@ -179,4 +179,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(res, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(InvalidDueDateException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidDueDateException(InvalidDueDateException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .message(e.getMessage())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidDueTimeException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidDueTime(InvalidDueTimeException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .message(e.getMessage())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.BAD_REQUEST);
+    }
+
 }

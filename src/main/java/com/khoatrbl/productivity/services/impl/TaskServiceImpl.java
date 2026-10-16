@@ -5,6 +5,8 @@ import com.khoatrbl.productivity.domains.dtos.*;
 import com.khoatrbl.productivity.domains.entities.SubTasks;
 import com.khoatrbl.productivity.domains.entities.Tasks;
 import com.khoatrbl.productivity.domains.entities.Users;
+import com.khoatrbl.productivity.exceptions.InvalidDueDateException;
+import com.khoatrbl.productivity.exceptions.InvalidDueTimeException;
 import com.khoatrbl.productivity.mappers.ProfileMapper;
 import com.khoatrbl.productivity.mappers.TaskMapper;
 import com.khoatrbl.productivity.repositories.TaskRepository;
@@ -19,8 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -82,13 +83,29 @@ public class TaskServiceImpl implements TaskService {
     public Tasks createTask(UUID userId, CreateTaskRequest createTaskRequest) {
 
         Users owner = userService.getUserById(userId);
+        String usersTimezone = owner.getTimezone();
+
+        // Check if due date is valid
+        LocalDate today = LocalDate.now(ZoneId.of(usersTimezone));
+        LocalTime now = LocalTime.now(ZoneId.of(usersTimezone));
+        LocalDate requestedDate = createTaskRequest.getDueDate();
+        LocalTime requestedTime = createTaskRequest.getDueTime();
+
+        if (requestedDate.isBefore(today)) {
+            throw new InvalidDueDateException("Due date cannot be in the past.");
+        } else if (requestedDate.isEqual(today)) {
+            // check if due time is valid
+            if (requestedTime.isBefore(now)) {
+                throw new InvalidDueTimeException("Due time cannot be in the past.");
+            }
+        }
 
         Tasks newTask = Tasks.builder()
                 .user(owner)
                 .title(StringUtils.normalizeTitle(createTaskRequest.getTitle()))
                 .description(StringUtils.normalizeDescription(createTaskRequest.getDescription()))
-                .dueDate(createTaskRequest.getDueDate())
-                .dueTime(createTaskRequest.getDueTime())
+                .dueDate(requestedDate)
+                .dueTime(requestedTime)
                 .priority(createTaskRequest.getPriority())
                 .status(Status.INCOMPLETE)
                 .sprintInMinutes(createTaskRequest.getSprintInMinutes())
