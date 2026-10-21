@@ -57,7 +57,7 @@ public class UserController {
     }
 
 
-    @PutMapping
+    @PatchMapping
     public ResponseEntity<UpdateProfileResponse> updateProfile(
             @Valid @RequestBody UpdateProfileRequest updateProfileRequest,
             Authentication authentication) {
@@ -66,15 +66,13 @@ public class UserController {
         Users user = userService.updateUserProfile(userId, updateProfileRequest);
 
         UpdateProfileResponse res = UpdateProfileResponse.builder()
-                .email(user.getEmail())
                 .displayName(user.getDisplayName())
-                .timezone(user.getTimezone())
                 .build();
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
-    @PatchMapping
+    @PatchMapping(path = "/passwords")
     public ResponseEntity<UpdatePasswordResponse> updatePassword(
             @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest,
             Authentication authentication) {

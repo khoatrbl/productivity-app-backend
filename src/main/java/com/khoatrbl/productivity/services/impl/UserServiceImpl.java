@@ -43,14 +43,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Users updateUserProfile(UUID id, UpdateProfileRequest updateProfileRequest) {
-        Users existingUser = userRepository.findByIdForUpdate(id)
+        Users existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found for id: " + id));
 
-        if (userRepository.existsByEmailAndIdNot(updateProfileRequest.getEmail(), id)) {
-            throw new EmailAlreadyExistsException("Email is already used.");
-        }
-
-        existingUser.setEmail(updateProfileRequest.getEmail());
         existingUser.setDisplayName(updateProfileRequest.getDisplayName());
 
         return userRepository.save(existingUser);

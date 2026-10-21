@@ -10,7 +10,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class UpdateProfileResponse {
-    private String email;
     private String displayName;
-    private String timezone;
 }

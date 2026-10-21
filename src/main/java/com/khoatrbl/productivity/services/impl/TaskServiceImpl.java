@@ -83,22 +83,10 @@ public class TaskServiceImpl implements TaskService {
     public Tasks createTask(UUID userId, CreateTaskRequest createTaskRequest) {
 
         Users owner = userService.getUserById(userId);
-        String usersTimezone = owner.getTimezone();
 
-        // Check if due date is valid
-        LocalDate today = LocalDate.now(ZoneId.of(usersTimezone));
-        LocalTime now = LocalTime.now(ZoneId.of(usersTimezone));
         LocalDate requestedDate = createTaskRequest.getDueDate();
         LocalTime requestedTime = createTaskRequest.getDueTime();
-
-        if (requestedDate.isBefore(today)) {
-            throw new InvalidDueDateException("Due date cannot be in the past.");
-        } else if (requestedDate.isEqual(today)) {
-            // check if due time is valid
-            if (requestedTime.isBefore(now)) {
-                throw new InvalidDueTimeException("Due time cannot be in the past.");
-            }
-        }
+        validateDueDateTime(requestedDate, requestedTime, owner.getTimezone());
 
         Tasks newTask = Tasks.builder()
                 .user(owner)
@@ -131,15 +119,27 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Tasks updateTaskData(UUID userId, UUID taskId, UpdateTaskRequest updateTaskRequest) {
 
+        Users owner = userService.getUserById(userId);
+
         Tasks taskToUpdate = taskRepository.findByIdAndUserId(taskId, userId)
                 .orElseThrow(
                         () -> new EntityNotFoundException("Task not found for task id: " + taskId)
                 );
 
+        LocalDate newDate = updateTaskRequest.getDueDate();
+        LocalTime newTime = updateTaskRequest.getDueTime();
+
+        boolean scheduleChanged =
+                !newDate.equals(taskToUpdate.getDueDate()) || !newTime.equals(taskToUpdate.getDueTime());
+
+        if (scheduleChanged) {
+            validateDueDateTime(newDate, newTime, taskToUpdate.getUser().getTimezone());
+        }
+
         taskToUpdate.setTitle(updateTaskRequest.getTitle());
         taskToUpdate.setDescription(updateTaskRequest.getDescription());
-        taskToUpdate.setDueDate(updateTaskRequest.getDueDate());
-        taskToUpdate.setDueTime(updateTaskRequest.getDueTime());
+        taskToUpdate.setDueDate(newDate);
+        taskToUpdate.setDueTime(newTime);
         taskToUpdate.setPriority(updateTaskRequest.getPriority());
         taskToUpdate.setSprintInMinutes(updateTaskRequest.getSprintInMinutes());
 
@@ -321,6 +321,19 @@ public class TaskServiceImpl implements TaskService {
         }
 
         task.setSubTasks(existingSubtasks);
+    }
+
+    private void validateDueDateTime(LocalDate dueDate, LocalTime dueTime, String timezone) {
+        ZonedDateTime nowInUserZone = ZonedDateTime.now(ZoneId.of(timezone));
+        LocalDate today = nowInUserZone.toLocalDate();
+        LocalTime now = nowInUserZone.toLocalTime();
+
+        if (dueDate.isBefore(today)) {
+            throw new InvalidDueDateException("Due date cannot be in the past.");
+        }
+        if (dueDate.isEqual(today) && dueTime.isBefore(now)) {
+            throw new InvalidDueTimeException("Due time cannot be in the past.");
+        }
     }
 
 }

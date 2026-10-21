@@ -12,9 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class UpdateProfileRequest {
-    @NotBlank(message = "Email is required.")
-    @Email(message = "Invalid email format.")
-    private String email;
 
     @NotBlank(message = "Display name is required.")
     private String displayName;
