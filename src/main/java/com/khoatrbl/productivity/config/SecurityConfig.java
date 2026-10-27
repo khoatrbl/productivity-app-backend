@@ -1,5 +1,6 @@
 package com.khoatrbl.productivity.config;
 
+import com.khoatrbl.productivity.components.JwtAuthenticationEntryPoint;
 import com.khoatrbl.productivity.security.JwtAuthenticationFilter;
 import com.khoatrbl.productivity.services.AuthenticationService;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.security.SecureRandom;
+
 @Configuration
 public class SecurityConfig {
 
@@ -28,19 +31,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    CorsConfigurationSource corsConfigurationSource,
-                                                   JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+                                                   JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                   JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .exceptionHandling(
+                        ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
-//                        .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/quotes/daily").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/quotes").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/quotes").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/quotes/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/shop").hasRole("ADMIN")
                         .anyRequest().authenticated()
-
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
@@ -54,6 +59,11 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    @Bean
+    public SecureRandom secureRandom() {
+        return new SecureRandom();
     }
 
     @Bean

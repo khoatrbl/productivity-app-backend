@@ -1,12 +1,13 @@
 package com.khoatrbl.productivity.services.impl;
 
 import com.khoatrbl.productivity.domains.dtos.CreatePetRequest;
+import com.khoatrbl.productivity.domains.dtos.LogInResult;
 import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
 import com.khoatrbl.productivity.domains.entities.Level;
-import com.khoatrbl.productivity.domains.entities.Pets;
 import com.khoatrbl.productivity.domains.entities.Users;
 import com.khoatrbl.productivity.exceptions.EmailAlreadyExistsException;
 import com.khoatrbl.productivity.exceptions.InvalidCredentialsException;
+import com.khoatrbl.productivity.exceptions.InvalidRefreshTokenException;
 import com.khoatrbl.productivity.exceptions.PasswordsNotMatchException;
 import com.khoatrbl.productivity.repositories.LevelRepository;
 import com.khoatrbl.productivity.repositories.UserRepository;
@@ -15,6 +16,7 @@ import com.khoatrbl.productivity.security.CustomUserDetailsService;
 import com.khoatrbl.productivity.services.AuthenticationService;
 import com.khoatrbl.productivity.services.InventoryItemService;
 import com.khoatrbl.productivity.services.PetService;
+import com.khoatrbl.productivity.services.RefreshTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -45,6 +47,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PetService petService;
     private final InventoryItemService inventoryItemService;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${jwt.secret}")
     private String JWT_SECRET;
@@ -53,7 +56,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private Duration JWT_EXP;
 
     @Override
-    public String login(String email, String password) {
+    public LogInResult login(String email, String password) {
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
@@ -61,11 +64,37 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             CustomUserDetails authenticatedUserDetails = (CustomUserDetails) auth.getPrincipal();
 
-            return this.generateJwtToken(authenticatedUserDetails);
+            String refreshToken = refreshTokenService.createRefreshToken(authenticatedUserDetails.getUser());
+            String accessJwtToken = this.generateJwtToken(authenticatedUserDetails);
+
+            return LogInResult.builder()
+                    .refreshToken(refreshToken)
+                    .accessToken(accessJwtToken)
+                    .build();
+
         } catch (AuthenticationException e) {
             throw new InvalidCredentialsException("Invalid email or password.");
         }
 
+    }
+
+    @Override
+    public String refresh(String refreshToken) {
+        Users user = refreshTokenService.validateAndExtend(refreshToken);
+
+        CustomUserDetails customUserDetails = new CustomUserDetails(user);
+
+        if (!customUserDetails.isEnabled() || !customUserDetails.isAccountNonLocked()) {
+            throw new InvalidRefreshTokenException("Account is disabled or locked.");
+        }
+
+        return this.generateJwtToken(customUserDetails);
+    }
+
+    @Override
+    @Transactional
+    public void revokeRefreshToken(String refreshToken) {
+        refreshTokenService.revoke(refreshToken);
     }
 
     @Override
@@ -98,7 +127,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public String registerUser(RegisterRequest registerRequest) {
+    public LogInResult registerUser(RegisterRequest registerRequest) {
         Users newUser = createNewUser(registerRequest);
 
         createUserDefaultPet(newUser);
@@ -106,7 +135,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         CustomUserDetails newUserDetails = new CustomUserDetails(newUser);
 
-        return this.generateJwtToken(newUserDetails);
+        String refreshToken = refreshTokenService.createRefreshToken(newUserDetails.getUser());
+        String accessJwtToken = this.generateJwtToken(newUserDetails);
+
+        return LogInResult.builder()
+                .refreshToken(refreshToken)
+                .accessToken(accessJwtToken)
+                .build();
     }
 
     private Key getSigningKey() {

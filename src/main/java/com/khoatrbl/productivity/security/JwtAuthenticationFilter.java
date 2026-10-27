@@ -1,6 +1,7 @@
 package com.khoatrbl.productivity.security;
 
 import com.khoatrbl.productivity.services.AuthenticationService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -36,8 +38,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
-        } catch (Exception e) {
-            log.warn("Received invalid JWT token.");
+        } catch (JwtException e) {
+            log.debug("Received invalid JWT token. Message: {}", e.getMessage());
+            SecurityContextHolder.clearContext();
+        } catch (UsernameNotFoundException e) {
+            log.debug("Username cannot be found. Message: {}", e.getMessage());
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

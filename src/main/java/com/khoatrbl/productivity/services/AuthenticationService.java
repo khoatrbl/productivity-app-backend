@@ -1,15 +1,20 @@
 package com.khoatrbl.productivity.services;
 
+import com.khoatrbl.productivity.domains.dtos.LogInResult;
 import com.khoatrbl.productivity.domains.dtos.RegisterRequest;
 import com.khoatrbl.productivity.security.CustomUserDetails;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public interface AuthenticationService {
-    String login(String email, String password);
+    LogInResult login(String email, String password);
+
+    String refresh(String refreshToken);
+
+    void revokeRefreshToken(String refreshToken);
 
     String generateJwtToken(CustomUserDetails userDetails);
 
     UserDetails validateToken(String token);
 
-    String registerUser(RegisterRequest registerRequest);
+    LogInResult registerUser(RegisterRequest registerRequest);
 }
