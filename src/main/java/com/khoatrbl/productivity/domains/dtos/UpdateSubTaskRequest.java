@@ -15,7 +15,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class UpdateSubTaskRequest {
-    @NotBlank(message = "Subtask ID is required.")
     private UUID id;
 
     @NotBlank(message = "Subtask content is required.")
@@ -26,5 +25,5 @@ public class UpdateSubTaskRequest {
     private int position;
 
     @NotNull(message = "Subtask status is required.")
-    private boolean isComplete;
+    private Boolean isComplete;
 }

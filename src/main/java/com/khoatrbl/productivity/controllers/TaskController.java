@@ -108,6 +108,18 @@ public class TaskController {
         return new ResponseEntity<>(updatedTask, HttpStatus.OK);
     }
 
+    @PatchMapping(path = "/{taskId}/subtasks/{subTaskId}")
+    public ResponseEntity<TaskDto> updateSubTaskStatus(
+            Authentication authentication,
+            @PathVariable UUID taskId,
+            @PathVariable UUID subTaskId,
+            @Valid @RequestBody UpdateSubTaskStatusRequest request) {
+
+        UUID userId = SecurityUtils.getCurrentUserId(authentication);
+        Tasks updated = taskService.updateSubTaskStatus(userId, taskId, subTaskId, request);
+        return ResponseEntity.ok(TaskMapper.toTaskDto(updated));
+    }
+
     @DeleteMapping(path = "/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable("id") UUID taskId, Authentication authentication) {
         UUID currentUserId = SecurityUtils.getCurrentUserId(authentication);

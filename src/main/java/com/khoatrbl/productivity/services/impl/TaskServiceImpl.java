@@ -193,6 +193,9 @@ public class TaskServiceImpl implements TaskService {
             taskToUpdate.setCompletedAt(now);
             taskToUpdate.setCompletionRewardClaimed(true);
 
+            // Finishing the task finishes every step
+            taskToUpdate.getSubTasks().forEach(subTask -> subTask.setComplete(true));
+
             if (ThreadLocalRandom.current().nextDouble() < BONUS_PET_CHANCE) {
                 int rolled = ThreadLocalRandom.current().nextInt(MIN_BONUS_PETS, MAX_BONUS_PETS_PER_TASK + 1);
                 bonusPetsGranted = petService.grantBonusPets(userId, rolled);
@@ -241,6 +244,21 @@ public class TaskServiceImpl implements TaskService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public Tasks updateSubTaskStatus(UUID userId, UUID taskId, UUID subTaskId, UpdateSubTaskStatusRequest request) {
+        Tasks task = taskRepository.findByIdAndUserId(taskId, userId)   // ownership check
+                .orElseThrow(() -> new EntityNotFoundException("Task not found for task id: " + taskId));
+
+        SubTasks subTask = task.getSubTasks().stream()
+                .filter(s -> s.getId().equals(subTaskId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Subtask not found for id: " + subTaskId));
+
+        subTask.setComplete(request.getIsComplete());
+        return task; // managed entity: saved on commit
+    }
+
     private List<SubTasks> prepareSubTasksForCreate(Tasks task, List<CreateSubTaskRequest> createSubTaskRequests, int totalExp) {
         List<SubTasks> subtasks = new ArrayList<>();
 
@@ -266,61 +284,50 @@ public class TaskServiceImpl implements TaskService {
         return subtasks;
     }
 
-    private void updateSubTasks(Tasks task, List<UpdateSubTaskRequest> updateSubTaskRequests, int totalExp) {
+    private void updateSubTasks(Tasks task, List<UpdateSubTaskRequest> requests, int totalExp) {
+        List<UpdateSubTaskRequest> incoming = requests != null ? requests : List.of();
+        List<SubTasks> subTasks = task.getSubTasks(); // the managed collection; mutate it, never replace it
 
-        Map<UUID, SubTasks> existingSubTasks = task.getSubTasks()
-                .stream()
-                .collect(Collectors.toMap(
-                        SubTasks::getId,
-                        subTask -> subTask
-                ));
+        Map<UUID, SubTasks> existingById = subTasks.stream()
+                .collect(Collectors.toMap(SubTasks::getId, s -> s));
 
-        Set<UUID> incomingIds = updateSubTaskRequests.stream()
+        Set<UUID> incomingIds = incoming.stream()
                 .map(UpdateSubTaskRequest::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        List<SubTasks> existingSubtasks = task.getSubTasks();
+        // 1. Remove subtasks the client no longer sends (orphanRemoval deletes the rows)
+        subTasks.removeIf(s -> !incomingIds.contains(s.getId()));
 
-        // Remove subtasks that are no longer present
-        existingSubtasks.removeIf(
-                subTask -> !incomingIds.contains(subTask.getId())
-        );
-
-        for (UpdateSubTaskRequest request : updateSubTaskRequests) {
+        // 2. Update existing ones in place, add new ones
+        for (UpdateSubTaskRequest request : incoming) {
             if (request.getId() == null) {
-                SubTasks newSubTask = SubTasks.builder()
+                subTasks.add(SubTasks.builder()
                         .content(request.getContent())
                         .position(request.getPosition())
                         .task(task)
                         .isComplete(false)
-                        .build();
-
-                existingSubtasks.add(newSubTask);
+                        .build());
             } else {
-                SubTasks existingSubtask = existingSubTasks.get(request.getId());
-
-                if (existingSubtask == null) {
+                SubTasks existing = existingById.get(request.getId());
+                if (existing == null) {
                     throw new EntityNotFoundException("Subtask not found for id: " + request.getId());
                 }
-
-                existingSubtask.setContent(request.getContent());
-                existingSubtask.setComplete(request.isComplete());
-                existingSubtask.setPosition(request.getPosition());
-
-                existingSubtasks.add(existingSubtask);
+                existing.setContent(request.getContent());
+                existing.setComplete(request.getIsComplete());
+                existing.setPosition(request.getPosition());
+                // no add(): it's already in the list
             }
         }
 
-        List<Integer> expForSubTasks = rewardCalculationService.calculateExpForSubTasks(totalExp, existingSubtasks.size());
+        // 3. Keep the list in position order, so EXP is assigned to the right steps
+        subTasks.sort(Comparator.comparingInt(SubTasks::getPosition));
 
-        for (int i = 0; i < existingSubtasks.size(); i++) {
-            int currentExp = expForSubTasks.get(i);
-
-            existingSubtasks.get(i).setExp(currentExp);
+        // 4. Redistribute EXP across the final set
+        List<Integer> expForSubTasks = rewardCalculationService.calculateExpForSubTasks(totalExp, subTasks.size());
+        for (int i = 0; i < subTasks.size(); i++) {
+            subTasks.get(i).setExp(expForSubTasks.get(i));
         }
-
-        task.setSubTasks(existingSubtasks);
     }
 
     private void validateDueDateTime(LocalDate dueDate, LocalTime dueTime, String timezone) {

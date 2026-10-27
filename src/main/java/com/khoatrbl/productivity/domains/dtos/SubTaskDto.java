@@ -17,5 +17,5 @@ public class SubTaskDto {
     private String content;
     private int exp;
     private int position;
-    private boolean isComplete;
+    private Boolean isComplete;
 }

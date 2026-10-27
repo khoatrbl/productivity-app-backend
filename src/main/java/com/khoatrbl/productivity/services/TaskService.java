@@ -23,4 +23,5 @@ public interface TaskService {
 
     RewardEstimateResponse estimateReward(UUID userId, RewardEstimateRequest rewardEstimateRequest);
 
+    Tasks updateSubTaskStatus(UUID userId, UUID taskId, UUID subTaskId, UpdateSubTaskStatusRequest request);
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import com.khoatrbl.productivity.domains.Priority;
 import com.khoatrbl.productivity.domains.Status;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,5 +45,6 @@ public class UpdateTaskRequest {
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     @Builder.Default
+    @Valid
     private List<UpdateSubTaskRequest> subTasks = new ArrayList<>();
 }
