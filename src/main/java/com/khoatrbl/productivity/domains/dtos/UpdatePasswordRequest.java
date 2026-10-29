@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class UpdatePasswordRequest {
-    @NotBlank(message = "Password is required.")
+    @NotBlank(message = "Current password is required.")
     @Size(min = 8, max = 100, message = "Password must be between {min} and {max} characters.")
     @Pattern(
             regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",

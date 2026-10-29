@@ -157,10 +157,9 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public TaskDto updateTaskStatus(UUID userId, UUID taskId, UpdateTaskStatusRequest updateTaskStatusRequest) {
+        // Lock order everywhere: task → user → pet (prevents deadlocks)
         Tasks taskToUpdate = taskRepository.findByIdAndUserIdForUpdate(taskId, userId)
-                        .orElseThrow(
-                                () -> new EntityNotFoundException("Task not found for id: " + taskId)
-                        );
+                .orElseThrow(() -> new EntityNotFoundException("Task not found for id: " + taskId));
 
         Status oldStatus = taskToUpdate.getStatus();
         Status newStatus = updateTaskStatusRequest.getTaskStatus();
@@ -171,12 +170,11 @@ public class TaskServiceImpl implements TaskService {
 
         if (startingSession) {
             if (taskToUpdate.getStartedAt() == null) {
-                taskToUpdate.setStartedAt(now); // first-ever start, kept for record/UI only — no longer feeds duration math
+                taskToUpdate.setStartedAt(now); // first-ever start, kept for record/UI only
             }
             taskToUpdate.setCurrentSessionStartedAt(now);
 
         } else if (closingSession && taskToUpdate.getCurrentSessionStartedAt() != null) {
-
             long sessionSeconds = Duration.between(taskToUpdate.getCurrentSessionStartedAt(), now).getSeconds();
             int previousTotal = taskToUpdate.getTotalFocusedSeconds() != null ? taskToUpdate.getTotalFocusedSeconds() : 0;
 
@@ -185,6 +183,9 @@ public class TaskServiceImpl implements TaskService {
         }
 
         int bonusPetsGranted = 0;
+        int expGranted = 0;
+        int coinsGranted = 0;
+        ProfileDto profile = null;
 
         if (newStatus == Status.COMPLETE
                 && oldStatus != Status.COMPLETE
@@ -196,6 +197,12 @@ public class TaskServiceImpl implements TaskService {
             // Finishing the task finishes every step
             taskToUpdate.getSubTasks().forEach(subTask -> subTask.setComplete(true));
 
+            // Rewards are decided here, from the stored task values. The client never sends amounts.
+            expGranted = taskToUpdate.getTotalExp();
+            coinsGranted = taskToUpdate.getCoins();
+            Users user = userService.grantTaskReward(userId, expGranted, coinsGranted);
+            profile = ProfileMapper.toDto(user);
+
             if (ThreadLocalRandom.current().nextDouble() < BONUS_PET_CHANCE) {
                 int rolled = ThreadLocalRandom.current().nextInt(MIN_BONUS_PETS, MAX_BONUS_PETS_PER_TASK + 1);
                 bonusPetsGranted = petService.grantBonusPets(userId, rolled);
@@ -203,9 +210,12 @@ public class TaskServiceImpl implements TaskService {
         }
 
         taskToUpdate.setStatus(newStatus);
-        TaskDto dto = TaskMapper.toTaskDto(taskToUpdate);
 
+        TaskDto dto = TaskMapper.toTaskDto(taskToUpdate);
         dto.setBonusPetsGranted(bonusPetsGranted);
+        dto.setExpGranted(expGranted);
+        dto.setCoinsGranted(coinsGranted);
+        dto.setProfile(profile); // null unless this call completed the task
         return dto;
     }
 

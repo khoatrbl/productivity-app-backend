@@ -35,5 +35,8 @@ public class TaskDto {
     private boolean startExpClaimed;
     private boolean completionRewardClaimed;
     private int bonusPetsGranted;
+    private int expGranted;
+    private int coinsGranted;
+    private ProfileDto profile;
     private LocalDateTime createdAt;
 }

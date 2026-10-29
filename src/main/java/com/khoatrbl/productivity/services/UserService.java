@@ -23,4 +23,6 @@ public interface UserService {
     Users updateUserLevel(UUID id, UpdateExpRequest updateExpRequest);
 
     Users updateUserCoins(UUID id, UpdateCoinsRequest updateCoinsRequest);
+
+    Users grantTaskReward(UUID id, int expGranted, int coinsGranted);
 }

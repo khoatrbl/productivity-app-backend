@@ -73,49 +73,13 @@ public class UserController {
     }
 
     @PatchMapping(path = "/passwords")
-    public ResponseEntity<UpdatePasswordResponse> updatePassword(
+    public ResponseEntity<Void> updatePassword(
             @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest,
             Authentication authentication) {
 
         UUID userId = SecurityUtils.getCurrentUserId(authentication);
         userService.updateUserPassword(userId, updatePasswordRequest);
 
-        return new ResponseEntity<>(new UpdatePasswordResponse(), HttpStatus.OK);
+        return ResponseEntity.ok().build();
     }
-
-    @PatchMapping(path = "/exp")
-    public ResponseEntity<UpdateExpResponse> updateUserLevel(
-            @Valid @RequestBody UpdateExpRequest updateExpRequest,
-            Authentication authentication) {
-
-        UUID userId = SecurityUtils.getCurrentUserId(authentication);
-
-        Users user = userService.updateUserLevel(userId, updateExpRequest);
-
-        UpdateExpResponse res = UpdateExpResponse.builder()
-                .currentLevel(LevelMapper.toDto(user.getCurrentLevel()))
-                .currentExp(user.getCurrentExp())
-                .build();
-
-        return new ResponseEntity<>(res, HttpStatus.OK);
-    }
-
-    @PatchMapping(path = "/coins")
-    public ResponseEntity<UpdateCoinsResponse> updateUserCoins(
-            @Valid @RequestBody UpdateCoinsRequest updateCoinsRequest,
-            Authentication authentication) {
-
-        UUID userId = SecurityUtils.getCurrentUserId(authentication);
-
-        Users user = userService.updateUserCoins(userId, updateCoinsRequest);
-
-        UpdateCoinsResponse res = UpdateCoinsResponse.builder()
-                .currentCoins(user.getCoins())
-                .build();
-
-        return new ResponseEntity<>(res, HttpStatus.OK);
-    }
-
-
-
 }

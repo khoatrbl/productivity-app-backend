@@ -57,6 +57,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void updateUserPassword(UUID id, UpdatePasswordRequest updatePasswordRequest) {
         Users currentUser = userRepository.findByIdForUpdate(id)
                 .orElseThrow(
@@ -131,5 +132,22 @@ public class UserServiceImpl implements UserService {
 
         user.setCoins(currentCoins + updateCoinsRequest.getAmount());
         return userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public Users grantTaskReward(UUID id, int expGranted, int coinsGranted) {
+        // Lock the row: task completion, quote reward and start-XP can land at the same time
+        Users currentUser = userRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found for id: " + id));
+
+        if (expGranted <= 0) {
+            throw new IllegalArgumentException("EXP gained must be positive.");
+        }
+
+        applyExp(currentUser, expGranted);
+        currentUser.setCoins(currentUser.getCoins() + coinsGranted);
+
+        return currentUser;
     }
 }
