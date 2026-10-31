@@ -222,4 +222,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(res, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(TaskNotInProgressException.class)
+    public ResponseEntity<ApiErrorResponse> handleTaskNotInProgressException(TaskNotInProgressException e) {
+        ApiErrorResponse res = ApiErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .message(e.getMessage())
+                .build();
+
+        return new ResponseEntity<>(res, HttpStatus.CONFLICT);
+    }
+
+
 }

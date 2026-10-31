@@ -38,5 +38,7 @@ public class TaskDto {
     private int expGranted;
     private int coinsGranted;
     private ProfileDto profile;
+    private int rewardPercent;
+    private long lateMinutes;
     private LocalDateTime createdAt;
 }

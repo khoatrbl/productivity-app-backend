@@ -82,6 +82,12 @@ public class Tasks {
     @Column
     private LocalDateTime currentSessionStartedAt; // set on IN_PROGRESS, cleared on pause/complete
 
+    @Column(updatable = false)
+    private LocalDate originalDueDate;
+
+    @Column(updatable = false)
+    private LocalTime originalDueTime;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
